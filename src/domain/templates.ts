@@ -169,7 +169,7 @@ const supportEscalation: ProcessMap = {
       kind: "flow",
     },
   ],
-  viewport: { x: 0, y: 0, zoom: 0.8 },
+  viewport: { x: 0, y: 0, zoom: 1 },
 };
 
 const newHireOnboarding: ProcessMap = {
@@ -335,7 +335,7 @@ const newHireOnboarding: ProcessMap = {
       kind: "flow",
     },
   ],
-  viewport: { x: 0, y: 0, zoom: 0.8 },
+  viewport: { x: 0, y: 0, zoom: 1 },
 };
 
 const purchaseOrderApproval: ProcessMap = {
@@ -479,7 +479,7 @@ const purchaseOrderApproval: ProcessMap = {
       kind: "flow",
     },
   ],
-  viewport: { x: 0, y: 0, zoom: 0.9 },
+  viewport: { x: 0, y: 0, zoom: 1 },
 };
 
 export interface MapTemplate {

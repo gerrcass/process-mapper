@@ -22,6 +22,7 @@ import { formatRelativeTime } from "@/lib/time";
 import { cn } from "@/lib/cn";
 import { InlineField } from "@/components/sipoc/inline-field";
 import { SipocBoard } from "@/components/sipoc/sipoc-board";
+import { FlowView } from "@/components/flow/flow-view";
 import { StatusPill } from "@/components/ui/pill";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -65,39 +66,6 @@ function StatusMenu({ mapId, status }: { mapId: string; status: MapStatus }) {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function FlowComingSoon() {
-  return (
-    <div className="flex h-full items-center justify-center overflow-auto p-6">
-      <div className="max-w-[520px] rounded-panel border border-line bg-paper-raised p-8 text-center shadow-soft">
-        <div
-          className="mx-auto flex max-w-[280px] items-center justify-center gap-2"
-          aria-hidden="true"
-        >
-          <span className="h-8 rounded-full bg-ink px-3" />
-          <span className="h-px flex-1 bg-line-strong" />
-          <span className="h-14 w-24 rounded-card border border-line bg-surface" />
-          <span className="h-px flex-1 bg-line-strong" />
-          <span className="h-8 rounded-full bg-ink px-3" />
-        </div>
-        <p className="eyebrow mt-7">Flow view</p>
-        <h2 className="mt-2 font-display text-[30px] leading-tight text-ink">
-          The flow canvas is the next view.
-        </h2>
-        <p className="mt-2 text-[13px] leading-5 text-ink-soft">
-          The document already holds nodes and edges. The editable canvas lands here in a later
-          ticket; the SIPOC sheet is the working view for now.
-        </p>
-        <Link
-          href="?view=sipoc"
-          className="mt-5 inline-flex text-[13px] font-medium text-accent-strong underline-offset-4 hover:underline"
-        >
-          Back to the SIPOC sheet
-        </Link>
-      </div>
-    </div>
   );
 }
 
@@ -279,7 +247,7 @@ export function Editor({ mapId }: { mapId: string }) {
         </main>
       ) : (
         <main className="editor-main flex-1 overflow-hidden">
-          <FlowComingSoon />
+          <FlowView map={map} focusNodeId={searchParams.get("node")} />
         </main>
       )}
 

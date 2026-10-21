@@ -257,12 +257,21 @@ function nextStepOrder(map: ProcessMap): number {
 
 function defaultStepPosition(map: ProcessMap): FlowPosition {
   if (map.nodes.length === 0) return { x: 120, y: STEP_DEFAULT_Y };
-  const rightmost = map.nodes.reduce((max, node) => Math.max(max, node.position.x), 0);
   const lastStep = highestOrderStep(map);
-  return {
-    x: rightmost + STEP_GAP_X,
-    y: lastStep?.position.y ?? STEP_DEFAULT_Y,
-  };
+  if (!lastStep) {
+    const rightmost = map.nodes.reduce((max, node) => Math.max(max, node.position.x), 0);
+    return { x: rightmost + STEP_GAP_X, y: STEP_DEFAULT_Y };
+  }
+
+  const x = lastStep.position.x + STEP_GAP_X;
+  let y = lastStep.position.y;
+  const collisions = map.nodes.filter(
+    (node) => Math.abs(node.position.x - x) < 240 && Math.abs(node.position.y - y) < 140,
+  );
+  if (collisions.length > 0) {
+    y = Math.max(...collisions.map((node) => node.position.y)) + 160;
+  }
+  return { x, y };
 }
 
 export interface AddNodeInput {
