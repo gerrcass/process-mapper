@@ -366,7 +366,7 @@ export function Lane({
               type="button"
               aria-label={`What belongs in ${meta.name}`}
               className={cn(
-                "inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-surface/70 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent",
+                "no-print inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-surface/70 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent",
                 style.text,
               )}
             >
@@ -467,7 +467,7 @@ export function Lane({
         </DndContext>
 
         {!readOnly ? (
-          <div className="mt-auto pt-2">
+          <div className="no-print mt-auto pt-2">
             {isProcess ? (
               <NewStepComposer mapId={mapId} />
             ) : (

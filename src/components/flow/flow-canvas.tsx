@@ -29,6 +29,11 @@ import { processSteps, validateConnection } from "@/domain/operations";
 import { useWorkspace } from "@/store/workspace";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import {
+  FLOW_PNG_EXPORT_EVENT,
+  FLOW_PNG_PENDING_KEY,
+  exportFlowPng,
+} from "@/lib/export-flow-image";
 import { AtlasNodeCard, type AtlasNode, type AtlasNodeData } from "./flow-nodes";
 import { AtlasFlowEdge, type AtlasEdge, type AtlasEdgeData } from "./flow-edge";
 
@@ -116,7 +121,10 @@ function FlowCanvasInner({
 }) {
   const [nodes, setNodes] = useNodesState<AtlasNode>(toNodes(map, selectedNodeId));
   const [edges, setEdges] = useEdgesState<AtlasEdge>(toEdges(map, selectedEdgeId));
-  const { fitView, setCenter, screenToFlowPosition } = useReactFlow<AtlasNode, AtlasEdge>();
+  const { fitView, setCenter, screenToFlowPosition, getNodes } = useReactFlow<
+    AtlasNode,
+    AtlasEdge
+  >();
   const addNode = useWorkspace((state) => state.addNode);
   const deleteNode = useWorkspace((state) => state.deleteNode);
   const deleteEdge = useWorkspace((state) => state.deleteEdge);
@@ -150,6 +158,49 @@ function FlowCanvasInner({
     }, 80);
     return () => window.clearTimeout(timer);
   }, [focusNodeId, map.nodes, onSelectEdge, onSelectNode, setCenter]);
+
+  React.useEffect(() => {
+    const handleExport = () => {
+      void (async () => {
+        try {
+          await exportFlowPng(
+            map,
+            getNodes(),
+            wrapperRef.current?.querySelector<HTMLElement>(".react-flow__viewport") ?? null,
+          );
+          toast("Flow image exported.");
+        } catch (error) {
+          toast(
+            error instanceof Error
+              ? error.message
+              : "Could not export the flow image. Try again from the flow view.",
+          );
+        } finally {
+          try {
+            window.sessionStorage.removeItem(FLOW_PNG_PENDING_KEY);
+          } catch {
+            // Ignore storage failures.
+          }
+        }
+      })();
+    };
+    window.addEventListener(FLOW_PNG_EXPORT_EVENT, handleExport);
+    return () => window.removeEventListener(FLOW_PNG_EXPORT_EVENT, handleExport);
+  }, [getNodes, map]);
+
+  React.useEffect(() => {
+    let pending: string | null = null;
+    try {
+      pending = window.sessionStorage.getItem(FLOW_PNG_PENDING_KEY);
+    } catch {
+      return;
+    }
+    if (pending !== map.id) return;
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new Event(FLOW_PNG_EXPORT_EVENT));
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [map.id]);
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

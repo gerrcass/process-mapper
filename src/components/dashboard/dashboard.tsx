@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useWorkspace } from "@/store/workspace";
 import { useUndoRedoShortcuts } from "@/lib/use-undo-redo-shortcuts";
 import { Button } from "@/components/ui/button";
+import { ImportMapControl } from "@/components/import-map-control";
 import { Tooltip } from "@/components/ui/tooltip";
 import { DeleteMapDialog } from "@/components/map-delete-dialog";
 import type { ProcessMap } from "@/domain/types";
@@ -144,6 +145,7 @@ export function Dashboard() {
                 </button>
               ) : null}
             </div>
+            <ImportMapControl onImported={() => setQuery("")} />
             <Button onClick={() => setResetOpen(true)} aria-label="Reset demo workspace">
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Reset demo</span>

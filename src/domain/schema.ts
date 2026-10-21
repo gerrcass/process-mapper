@@ -72,7 +72,10 @@ const flowEdgeSchema = z
 
 export const processMapSchema = z
   .object({
-    schemaVersion: z.literal(SCHEMA_VERSION),
+    schemaVersion: z
+      .number()
+      .int()
+      .refine((value) => value === SCHEMA_VERSION, `must be ${SCHEMA_VERSION} for this version`),
     id: z.string().min(1),
     title: z.string().trim().min(1, "must not be empty"),
     description: z.string(),

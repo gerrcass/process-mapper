@@ -38,6 +38,7 @@ import {
 import { MapNotFound } from "@/components/map-not-found";
 import { ReadinessBadge } from "@/components/readiness/readiness-badge";
 import { ReadinessDialog } from "@/components/readiness/readiness-dialog";
+import { ExportMenu } from "./export-menu";
 import { DeleteMapDialog } from "@/components/map-delete-dialog";
 import { MapDetailsDialog } from "./map-dialogs";
 
@@ -166,6 +167,7 @@ export function Editor({ mapId }: { mapId: string }) {
               level={readiness.level}
               onClick={() => setReviewOpen(true)}
             />
+            <ExportMenu map={map} view={view} />
             <span className="mx-1 hidden h-5 w-px bg-line sm:inline-block" aria-hidden="true" />
             <div className="hidden items-center gap-1 sm:flex">
               <Tooltip label="Undo">
