@@ -48,6 +48,18 @@ _Avoid_: Preset, example, sample
 The local collection of process maps in one browser. There is no account or shared workspace.
 _Avoid_: Account, organization, team
 
+**Share link**:
+A URL that carries a snapshot of one process map inside its fragment. Anyone who has the link can read the map; no server stores it.
+_Avoid_: Public link, permalink, export link
+
+**Snapshot**:
+The copy of a process map captured when a share link is created. A snapshot never updates; re-share after editing.
+_Avoid_: Version, revision, freeze
+
+**Adopt**:
+To copy a shared snapshot into the local workspace as a new process map with a fresh identity.
+_Avoid_: Import link, clone, claim
+
 **Tidy flow**:
 The explicit action that repositions flow nodes using the auto-layout algorithm. It changes canvas positions, never SIPOC order.
 _Avoid_: Auto-arrange, layout, format

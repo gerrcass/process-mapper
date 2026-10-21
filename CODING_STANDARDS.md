@@ -7,7 +7,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - Use the vocabulary in `GLOSSARY.md`. A “process step” is a flow node of kind `step`; do not introduce synonyms such as task, activity, or stage.
 - Domain operations are pure functions over a process map. They return new documents, update timestamps, and never touch browser APIs, React, or the store.
 - The store is the only mutation path. Components call store actions; they do not assemble partial documents or mutate nested objects.
-- Validate at the edge: persisted state, imported JSON, and file input. Once validated, internal code can trust the document type.
+- Validate at the edge: persisted state, imported JSON, share link payloads, and file input. Once validated, internal code can trust the document type.
 - Keep the flow/node adapter separate from the domain model so React Flow types do not leak into domain tests.
 - Entity IDs inside pure operations are deterministic (`nextEntityId(...)`) or injected. Random identity belongs to the store or import boundary, never to a pure map operation.
 
@@ -24,6 +24,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 ### Static export
 
 - Keep the app exportable. The editor is the static `/maps?map=<id>` route. Dynamic routes, request-dependent route handlers, server actions, and redirects/rewrites break the GitHub Pages build.
+- Keep map content in the URL fragment on the `/maps` route. The fragment never reaches the host, and the link inherits the base path from the browser instead of from duplicated configuration.
 - Run `pnpm build:static` after changing routes, metadata, fonts, public assets, or anything that could affect prerendering. A green server build is not enough.
 - Pages deploys under `/process-mapper`. Use `mapHref` and Next's `basePath` support rather than hardcoding root-relative application URLs.
 

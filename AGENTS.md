@@ -5,9 +5,9 @@ Local-first SIPOC and process-mapping demo. Next.js App Router, TypeScript, Tail
 ## Start here
 
 - **Live demo:** https://gerrcass.github.io/process-mapper/
-- **Spec:** GitHub issue #1. **Tickets:** #2–#10. Read with `gh issue view <n>`; the blocker graph is native.
+- **Spec:** GitHub issue #12. **Tickets:** #13–#16. Read with `gh issue view <n>`; the blocker graph is native. The first slice is issue #1 with tickets #2–#10.
 - **Domain language:** `GLOSSARY.md`. Use its terms in code, tests, copy, and commits.
-- **Decisions:** `docs/adr/`. Read the two ADRs before changing persistence or the two-view model.
+- **Decisions:** `docs/adr/`. Read them before changing persistence, the two-view model, or share links.
 - **Visual direction:** `docs/design/brief.md`. Use its tokens and patterns instead of inventing a local style.
 - **Review standards:** `CODING_STANDARDS.md`. The reviewer reads this; implementers should too.
 - **Tracker conventions:** `docs/agents/issue-tracker.md`.
@@ -25,9 +25,10 @@ There are no runtime environment variables, backend, or accounts. Map data lives
 
 - The **flow graph owns process steps**; the SIPOC Process lane is derived. Do not add a second step collection. See ADR-0002.
 - Map mutations go through **pure operations** and then the store. Components do not edit document internals.
-- Validate every boundary: persisted payloads, imported files, and parsed form values.
+- Validate every boundary: persisted payloads, imported files, share link payloads, and parsed form values.
 - The editor is client-side and hydration-safe: no `localStorage` reads during render, and a stable skeleton until rehydration finishes.
 - Use the existing UI primitives and design tokens. New dependencies need a reason in the ticket.
+- Share links ride the fragment of the `/maps` route and are validated like any other boundary. See ADR-0003.
 - Interactive controls need an accessible name, visible focus, and a keyboard path.
 - **Static hosting:** GitHub Pages serves a static export and the editor is the `/maps?map=<id>` route. Read the static-export rules in `CODING_STANDARDS.md` before changing routes, metadata, or assets.
 
