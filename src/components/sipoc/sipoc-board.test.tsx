@@ -1,23 +1,29 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useWorkspace } from "@/store/workspace";
 import { createSeededWorkspace } from "@/domain/templates";
-import { createBlankMap } from "@/domain/operations";
+import { createBlankMap, processSteps } from "@/domain/operations";
 import { TEST_NOW } from "@/test/fixtures";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SipocBoard } from "./sipoc-board";
 
-function BoardHarness({ mapId }: { mapId: string }) {
+function BoardHarness({
+  mapId,
+  onOpenFlow,
+}: {
+  mapId: string;
+  onOpenFlow?: (nodeId: string) => void;
+}) {
   const map = useWorkspace((state) => state.maps.find((candidate) => candidate.id === mapId));
   if (!map) return null;
-  return <SipocBoard map={map} />;
+  return <SipocBoard map={map} onOpenFlow={onOpenFlow} />;
 }
 
-function setup(mapId = "map-support-escalation") {
+function setup(mapId = "map-support-escalation", onOpenFlow?: (nodeId: string) => void) {
   render(
     <TooltipProvider>
-      <BoardHarness mapId={mapId} />
+      <BoardHarness mapId={mapId} onOpenFlow={onOpenFlow} />
     </TooltipProvider>,
   );
 }
@@ -145,5 +151,122 @@ describe("SIPOC entry editing", () => {
     expect(lane.getByText("Examples")).toBeInTheDocument();
     expect(lane.getByText("Support inbox")).toBeInTheDocument();
     expect(useWorkspace.getState().maps[0].sipoc.suppliers).toEqual([]);
+  });
+});
+
+function processLane() {
+  return screen.getByRole("region", { name: "Process" });
+}
+
+function supportMap() {
+  return useWorkspace
+    .getState()
+    .maps.find((candidate) => candidate.id === "map-support-escalation")!;
+}
+
+describe("SIPOC process steps", () => {
+  it("adds a step with the next SIPOC order and a connection from the last step", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(within(processLane()).getByRole("button", { name: "Add step" }));
+    await user.type(screen.getByLabelText("New step title"), "Confirm the fix");
+    await user.click(screen.getByRole("button", { name: "Add process step" }));
+
+    const map = supportMap();
+    const steps = processSteps(map);
+    expect(steps).toHaveLength(5);
+    expect(steps[4]).toMatchObject({ title: "Confirm the fix", sipocOrder: 5 });
+    expect(
+      map.edges.some((edge) => edge.source === steps[3].id && edge.target === steps[4].id),
+    ).toBe(true);
+    expect(screen.getByLabelText("New step title")).toHaveFocus();
+    expect(within(processLane()).getByText("Confirm the fix")).toBeInTheDocument();
+  });
+
+  it("edits a step owner from the Process lane", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(within(processLane()).getAllByRole("button", { name: "Details" })[0]);
+    const owner = screen.getByLabelText("Step 1 owner");
+    await user.clear(owner);
+    await user.type(owner, "Support director");
+    await user.keyboard("{Enter}");
+
+    expect(processSteps(supportMap())[0].owner).toBe("Support director");
+
+    await user.click(within(processLane()).getByRole("button", { name: "Hide details" }));
+    expect(within(processLane()).getByText("Support director")).toBeInTheDocument();
+  });
+
+  it("reorders steps with the keyboard without moving canvas positions", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const before = supportMap();
+    const positions = new Map(before.nodes.map((node) => [node.id, { ...node.position }]));
+    const handle = screen.getByRole("button", {
+      name: "Reorder step 1: Triage the ticket",
+    });
+    handle.focus();
+    await user.keyboard("{ArrowDown}");
+
+    await waitFor(() => {
+      expect(processSteps(supportMap()).map((step) => step.title)).toEqual([
+        "Assign an incident owner",
+        "Triage the ticket",
+        "Post the first customer update",
+        "Resolve and capture the cause",
+      ]);
+    });
+    expect(processSteps(supportMap()).map((step) => step.sipocOrder)).toEqual([1, 2, 3, 4]);
+    for (const node of supportMap().nodes) {
+      expect(node.position).toEqual(positions.get(node.id));
+    }
+  });
+
+  it("deletes a step, cleans its edges, reindexes order, and recovers focus", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    await user.click(within(processLane()).getAllByRole("button", { name: "Details" })[1]);
+    await user.click(screen.getByRole("button", { name: "Delete step" }));
+
+    const map = supportMap();
+    expect(processSteps(map).map((step) => step.title)).toEqual([
+      "Triage the ticket",
+      "Post the first customer update",
+      "Resolve and capture the cause",
+    ]);
+    expect(processSteps(map).map((step) => step.sipocOrder)).toEqual([1, 2, 3]);
+    expect(
+      map.edges.some(
+        (edge) => edge.source === "support-node-assign" || edge.target === "support-node-assign",
+      ),
+    ).toBe(false);
+    await waitFor(() =>
+      expect(within(processLane()).getByRole("button", { name: "Add step" })).toHaveFocus(),
+    );
+  });
+
+  it("jumps from a step card to its flow node", async () => {
+    const user = userEvent.setup();
+    const onOpenFlow = vi.fn();
+    setup("map-support-escalation", onOpenFlow);
+
+    await user.click(
+      within(processLane()).getByRole("button", { name: "Open Triage the ticket in flow" }),
+    );
+
+    expect(onOpenFlow).toHaveBeenCalledWith("support-node-triage");
+  });
+
+  it("keeps start, decision, and end nodes out of the Process lane", () => {
+    setup();
+    const lane = within(processLane());
+    expect(lane.queryByText("Priority 1 ticket arrives")).not.toBeInTheDocument();
+    expect(lane.queryByText("Severity confirmed?")).not.toBeInTheDocument();
+    expect(lane.queryByText("Escalation closed")).not.toBeInTheDocument();
   });
 });

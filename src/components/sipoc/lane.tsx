@@ -355,7 +355,7 @@ export function Lane({
               "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 font-mono text-[10px]",
               style.chip,
             )}
-            aria-label={`${count} ${count === 1 ? "entry" : "entries"}`}
+            aria-label={`${count} ${isProcess ? (count === 1 ? "step" : "steps") : count === 1 ? "entry" : "entries"}`}
           >
             {count}
           </span>

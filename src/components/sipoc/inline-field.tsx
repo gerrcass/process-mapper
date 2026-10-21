@@ -49,6 +49,13 @@ export function InlineField({
     onCommit(next);
   };
 
+  const fieldClassName = cn(
+    "w-full rounded-[5px] border border-transparent bg-transparent px-1 py-0.5 text-inherit",
+    "transition-[background-color,border-color,box-shadow] duration-150",
+    "hover:border-line hover:bg-surface/70 focus:border-line focus:bg-surface focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent",
+    inputClassName,
+  );
+
   const shared = {
     "aria-label": ariaLabel,
     value: editing ? draft : value,
@@ -82,12 +89,7 @@ export function InlineField({
         event.currentTarget.blur();
       }
     },
-    className: cn(
-      "w-full rounded-[5px] border border-transparent bg-transparent px-1 py-0.5 text-inherit",
-      "transition-[background-color,border-color,box-shadow] duration-150",
-      "hover:border-line hover:bg-surface/70 focus:border-line focus:bg-surface focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent",
-      inputClassName,
-    ),
+    className: fieldClassName,
   };
 
   return (
@@ -97,7 +99,7 @@ export function InlineField({
           {...shared}
           rows={multiline ? rows : 1}
           className={cn(
-            shared.className,
+            fieldClassName,
             "resize-none leading-5",
             !multiline && "field-sizing-content min-h-5 overflow-hidden",
           )}
