@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useUndoRedoShortcuts } from "@/lib/use-undo-redo-shortcuts";
 import {
   ArrowLeft,
   Check,
@@ -33,7 +34,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MapNotFound } from "@/components/map-not-found";
-import { DeleteMapDialog, MapDetailsDialog } from "./map-dialogs";
+import { DeleteMapDialog } from "@/components/map-delete-dialog";
+import { MapDetailsDialog } from "./map-dialogs";
 
 function StatusMenu({ mapId, status }: { mapId: string; status: MapStatus }) {
   const setStatus = useWorkspace((state) => state.setStatus);
@@ -64,24 +66,6 @@ function StatusMenu({ mapId, status }: { mapId: string; status: MapStatus }) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-function useUndoRedoShortcuts() {
-  const undo = useWorkspace((state) => state.undo);
-  const redo = useWorkspace((state) => state.redo);
-
-  React.useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") return;
-      event.preventDefault();
-      if (event.shiftKey) redo();
-      else undo();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo]);
 }
 
 function FlowComingSoon() {

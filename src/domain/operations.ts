@@ -528,6 +528,7 @@ interface CloneOptions {
   id: string;
   now: string;
   title?: string;
+  description?: string;
   origin: ProcessMap["origin"];
   status?: MapStatus;
 }
@@ -552,7 +553,7 @@ function cloneWithFreshIds(source: ProcessMap, options: CloneOptions): ProcessMa
     schemaVersion: SCHEMA_VERSION,
     id: options.id,
     title: requireTitle(options.title ?? source.title),
-    description: source.description,
+    description: options.description?.trim() || source.description,
     status: options.status ?? source.status,
     origin: options.origin,
     createdAt: options.now,
@@ -583,12 +584,13 @@ export function duplicateMap(
 
 export function createMapFromTemplate(
   template: ProcessMap,
-  options: { id?: string; now: string; title?: string },
+  options: { id?: string; now: string; title?: string; description?: string },
 ): ProcessMap {
   return cloneWithFreshIds(template, {
     id: options.id ?? createId("map"),
     now: options.now,
     title: options.title ?? template.title,
+    description: options.description,
     origin: "template",
     status: "draft",
   });

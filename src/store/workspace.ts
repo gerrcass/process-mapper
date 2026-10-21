@@ -219,7 +219,12 @@ export const useWorkspace = create<WorkspaceState>()(
           const id = createId("map");
           const template = input.templateId ? templateById(input.templateId) : undefined;
           const map = template
-            ? createMapFromTemplate(template.document, { id, now, title: input.title })
+            ? createMapFromTemplate(template.document, {
+                id,
+                now,
+                title: input.title,
+                description: input.description,
+              })
             : createBlankMap({
                 id,
                 title: input.title,
@@ -357,7 +362,7 @@ export const useWorkspace = create<WorkspaceState>()(
             return;
           }
           const next = moveNode(current, nodeId, position, nowIso());
-          const snapshot = dragSnapshot && dragSnapshot !== state.maps ? dragSnapshot : null;
+          const snapshot = dragSnapshot;
           set({
             maps: state.maps.map((map) => (map.id === mapId ? next : map)),
             past: snapshot ? [...state.past, snapshot].slice(-HISTORY_LIMIT) : state.past,
