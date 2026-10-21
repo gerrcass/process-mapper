@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { MAP_TEMPLATES } from "@/domain/templates";
 import { useWorkspace } from "@/store/workspace";
 import { cn } from "@/lib/cn";
+import { mapHref } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -79,7 +80,7 @@ export function NewMapDialog({
     }
     toast(selection === "blank" ? "Blank map created." : "Map created from template.");
     onOpenChange(false);
-    router.push(`/maps/${id}`);
+    router.push(mapHref(id));
   };
 
   const options = [

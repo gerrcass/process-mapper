@@ -7,6 +7,7 @@ import type { ProcessMap } from "@/domain/types";
 import { jsonFileName, serializeMap } from "@/domain/import-export";
 import { FLOW_PNG_EXPORT_EVENT, FLOW_PNG_PENDING_KEY } from "@/lib/export-flow-image";
 import { downloadText } from "@/lib/download";
+import { mapHref } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +21,7 @@ import { useMapFileImport } from "@/components/import-map-control";
 export function ExportMenu({ map, view }: { map: ProcessMap; view: "sipoc" | "flow" }) {
   const router = useRouter();
   const { input, inputRef } = useMapFileImport((mapId) => {
-    router.push(`/maps/${mapId}`);
+    router.push(mapHref(mapId));
   });
 
   const exportJson = () => {
@@ -38,12 +39,12 @@ export function ExportMenu({ map, view }: { map: ProcessMap; view: "sipoc" | "fl
     } catch {
       // Storage can be blocked; the flow still opens and can be exported from there.
     }
-    router.push(`/maps/${map.id}?view=flow`);
+    router.push(mapHref(map.id, { view: "flow" }));
   };
 
   const print = () => {
     if (view === "flow") {
-      router.push(`/maps/${map.id}`);
+      router.push(mapHref(map.id));
       window.setTimeout(() => window.print(), 700);
       return;
     }

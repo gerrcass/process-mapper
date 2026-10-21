@@ -20,6 +20,7 @@ import { evaluateReadiness, type ReadinessCheck } from "@/domain/readiness";
 import { STATUS_LABELS, type MapStatus } from "@/domain/types";
 import { useWorkspace } from "@/store/workspace";
 import { formatRelativeTime } from "@/lib/time";
+import { mapHref } from "@/lib/routes";
 import { cn } from "@/lib/cn";
 import { InlineField } from "@/components/sipoc/inline-field";
 import { SipocBoard } from "@/components/sipoc/sipoc-board";
@@ -100,11 +101,11 @@ export function Editor({ mapId }: { mapId: string }) {
 
   const stats = mapStats(map);
   const readiness = evaluateReadiness(map);
-  const sipocHref = `/maps/${map.id}`;
-  const flowHref = `/maps/${map.id}?view=flow`;
+  const sipocHref = mapHref(map.id);
+  const flowHref = mapHref(map.id, { view: "flow" });
 
   const openFlow = (nodeId: string) => {
-    router.push(`/maps/${map.id}?view=flow&node=${encodeURIComponent(nodeId)}`);
+    router.push(mapHref(map.id, { view: "flow", node: nodeId }));
   };
 
   const fixReadinessCheck = (check: ReadinessCheck) => {
@@ -126,7 +127,7 @@ export function Editor({ mapId }: { mapId: string }) {
     const copyId = duplicateMap(map.id);
     if (!copyId) return;
     toast("Map duplicated.");
-    router.push(`/maps/${copyId}`);
+    router.push(mapHref(copyId));
   };
 
   return (
@@ -286,7 +287,7 @@ export function Editor({ mapId }: { mapId: string }) {
             <FlowView
               map={map}
               focusNodeId={searchParams.get("node")}
-              onOpenSipoc={() => router.push(`/maps/${map.id}`)}
+              onOpenSipoc={() => router.push(mapHref(map.id))}
             />
           </div>
         </main>

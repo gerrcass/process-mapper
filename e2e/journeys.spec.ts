@@ -25,7 +25,7 @@ test.afterEach(() => {
 
 test("primary journey keeps SIPOC and flow in sync across a reload", async ({ page }) => {
   await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
-  await expect(page).toHaveURL(/\/maps\/map-support-escalation$/);
+  await expect(page).toHaveURL(/\/maps\/?\?map=map-support-escalation$/);
   await expect(page.getByRole("heading", { name: "Suppliers" })).toBeVisible();
 
   await page.getByRole("button", { name: "Add supplier" }).click();
@@ -87,7 +87,7 @@ test("lifecycle journey creates from a template, searches, deletes, and imports 
   await title.fill("Onboarding v2");
   await page.getByRole("button", { name: "Create map" }).click();
 
-  await expect(page).toHaveURL(/\/maps\/map-/);
+  await expect(page).toHaveURL(/\/maps\/?\?map=map-/);
   await expect(page.getByRole("textbox", { name: "Map title" })).toHaveValue("Onboarding v2");
 
   await page.getByRole("link", { name: "Back to workspace" }).click();
@@ -152,7 +152,7 @@ test("resilience states cover corrupt storage, a missing map, and an empty flow"
   await expect(corruptPage.getByRole("link", { name: `Open ${SUPPORT_MAP}` })).toBeVisible();
   await context.close();
 
-  await page.goto("/maps/does-not-exist");
+  await page.goto("/maps?map=does-not-exist");
   await expect(
     page.getByRole("heading", { name: "This map is not in this workspace." }),
   ).toBeVisible();
@@ -231,7 +231,7 @@ test("tablet width keeps the SIPOC board and inspector usable", async ({ page })
 });
 
 test("a deep-linked node does not hijack later inspector edits", async ({ page }) => {
-  await page.goto("/maps/map-support-escalation?view=flow&node=support-node-triage");
+  await page.goto("/maps?map=map-support-escalation&view=flow&node=support-node-triage");
   const title = page.getByRole("textbox", { name: "Title", exact: true });
   await expect(title).toHaveValue("Triage the ticket");
 

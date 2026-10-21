@@ -6,6 +6,7 @@ import { ArrowRight, Copy, ExternalLink, MoreHorizontal, Trash2 } from "lucide-r
 import type { ProcessMap } from "@/domain/types";
 import { mapStats } from "@/domain/operations";
 import { formatRelativeTime } from "@/lib/time";
+import { mapHref } from "@/lib/routes";
 import { StatusPill } from "@/components/ui/pill";
 import {
   DropdownMenu,
@@ -68,7 +69,7 @@ export function MapCard({
   return (
     <article className="group relative flex flex-col rounded-card border border-line bg-surface p-5 shadow-soft transition-[transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lift focus-within:-translate-y-0.5 focus-within:shadow-lift">
       <Link
-        href={`/maps/${map.id}`}
+        href={mapHref(map.id)}
         className="absolute inset-0 z-10 rounded-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         aria-label={`Open ${map.title}`}
       />
@@ -92,7 +93,7 @@ export function MapCard({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => router.push(`/maps/${map.id}`)}>
+            <DropdownMenuItem onSelect={() => router.push(mapHref(map.id))}>
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
               Open map
             </DropdownMenuItem>

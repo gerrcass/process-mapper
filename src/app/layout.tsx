@@ -22,9 +22,11 @@ const instrumentSerif = Instrument_Serif({
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:3000");
+  (process.env.GITHUB_PAGES === "true"
+    ? "https://gerrcass.github.io/process-mapper"
+    : process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -39,11 +41,20 @@ export const metadata: Metadata = {
     title: "Process Atlas",
     description: "Frame a process as a SIPOC sheet and map its flow in one local-first workspace.",
     type: "website",
+    images: [
+      {
+        url: "og.png",
+        width: 1200,
+        height: 630,
+        alt: "Process Atlas: frame the process, map the flow.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Process Atlas",
     description: "Frame a process as a SIPOC sheet and map its flow in one local-first workspace.",
+    images: ["og.png"],
   },
 };
 

@@ -1,8 +1,10 @@
 # Process Atlas
 
+[**Open the live demo →**](https://gerrcass.github.io/process-mapper/)
+
 A local-first SIPOC and process-mapping workspace. Frame a process as a five-lane SIPOC sheet, map the flow behind it, and leave with something you can share. No account, backend, or environment variables.
 
-![The Process Atlas workspace with two seeded process maps](docs/screenshots/01-workspace.png)
+[![The Process Atlas workspace with two seeded process maps and a template gallery](docs/screenshots/01-workspace.png)](https://gerrcass.github.io/process-mapper/)
 
 ## The idea
 
@@ -166,16 +168,26 @@ The app quarantines an unreadable payload under `process-atlas.workspace.corrupt
 
 A print-ready SIPOC sheet is in [docs/screenshots/08-print-sheet.png](docs/screenshots/08-print-sheet.png).
 
-## Deployment
+## Deployment and GitHub Pages
 
-The app is a standard Next.js 16 project with no server-side data or secrets. Deploy it to any Next.js host, or run:
+The live demo runs on GitHub Pages: **https://gerrcass.github.io/process-mapper/**
+
+The app has no server-side data or secrets. The editor uses a single static `/maps?map=<id>` route, so the whole workspace exports to plain HTML, CSS, and JavaScript. The workflow in `.github/workflows/deploy-pages.yml` runs on every push to `main`, builds with the repository base path, and deploys `out/`.
+
+For a local production server:
 
 ```bash
 pnpm build
 pnpm start
 ```
 
-Open Graph URLs resolve from `NEXT_PUBLIC_SITE_URL` when set, then Vercel's production URL, then `http://localhost:3000`. No variable is required to run or deploy; set `NEXT_PUBLIC_SITE_URL` only if social previews need a specific public origin on another host.
+The Pages build is the same app with static export enabled:
+
+```bash
+GITHUB_PAGES=true PAGES_BASE_PATH=/process-mapper pnpm build
+```
+
+The workflow supplies `PAGES_BASE_PATH` and `NEXT_PUBLIC_SITE_URL` from the Pages environment, so metadata and Open Graph assets resolve against the deployed origin. No environment variables are needed for local development.
 
 ## Scope
 

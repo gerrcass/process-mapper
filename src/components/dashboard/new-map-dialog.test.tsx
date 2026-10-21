@@ -5,6 +5,7 @@ import { useWorkspace } from "@/store/workspace";
 import { createSeededWorkspace } from "@/domain/templates";
 import { TEST_NOW } from "@/test/fixtures";
 import { NewMapDialog } from "./new-map-dialog";
+import { mapHref } from "@/lib/routes";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -53,7 +54,7 @@ describe("new map dialog", () => {
     expect(created.title).toBe("Support escalation");
     expect(created.origin).toBe("template");
     expect(created.description).toBe("A second escalation path.");
-    expect(push).toHaveBeenCalledWith(`/maps/${created.id}`);
+    expect(push).toHaveBeenCalledWith(mapHref(created.id));
   });
 
   it("creates a blank map when no template is chosen", async () => {
