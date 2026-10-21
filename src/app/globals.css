@@ -248,6 +248,17 @@
     0 0 0 4px var(--color-accent);
 }
 
+.react-flow__node:focus-visible {
+  outline: none;
+}
+
+.react-flow__node:focus-visible .flow-node-card {
+  border-color: var(--color-ink);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-accent);
+}
+
 .react-flow__node-start .react-flow__handle,
 .react-flow__node-end .react-flow__handle {
   background: var(--color-ink);

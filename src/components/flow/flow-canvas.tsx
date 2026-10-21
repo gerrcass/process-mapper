@@ -22,14 +22,7 @@ import {
   type EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  GitBranch,
-  Maximize2,
-  Play,
-  Plus,
-  Square,
-  Workflow,
-} from "lucide-react";
+import { GitBranch, Maximize2, Play, Plus, Square, Wand2, Workflow } from "lucide-react";
 import { toast } from "sonner";
 import type { FlowNodeKind, ProcessMap } from "@/domain/types";
 import { processSteps, validateConnection } from "@/domain/operations";
@@ -130,6 +123,7 @@ function FlowCanvasInner({
   const connectNodes = useWorkspace((state) => state.connectNodes);
   const beginNodeDrag = useWorkspace((state) => state.beginNodeDrag);
   const endNodeDrag = useWorkspace((state) => state.endNodeDrag);
+  const tidyFlow = useWorkspace((state) => state.tidyFlow);
   const setViewport = useWorkspace((state) => state.setViewport);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
 
@@ -181,15 +175,7 @@ function FlowCanvasInner({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    deleteEdge,
-    deleteNode,
-    map.id,
-    onSelectEdge,
-    onSelectNode,
-    selectedEdgeId,
-    selectedNodeId,
-  ]);
+  }, [deleteEdge, deleteNode, map.id, onSelectEdge, onSelectNode, selectedEdgeId, selectedNodeId]);
 
   const revealNode = (nodeId: string) => {
     const node = useWorkspace
@@ -223,6 +209,14 @@ function FlowCanvasInner({
     window.setTimeout(() => revealNode(id), 80);
   };
 
+  const handleTidy = () => {
+    tidyFlow(map.id);
+    toast("Flow tidied. SIPOC order is unchanged.");
+    window.setTimeout(() => {
+      void fitView({ padding: 0.18, duration: 280 });
+    }, 80);
+  };
+
   const isValidConnection: IsValidConnection = (connection) => {
     if (!connection.source || !connection.target) return false;
     return validateConnection(map, connection.source, connection.target).ok;
@@ -243,8 +237,7 @@ function FlowCanvasInner({
     toast("Nodes connected.");
   };
 
-  const hasSavedViewport =
-    map.viewport.x !== 0 || map.viewport.y !== 0 || map.viewport.zoom !== 1;
+  const hasSavedViewport = map.viewport.x !== 0 || map.viewport.y !== 0 || map.viewport.zoom !== 1;
 
   return (
     <div ref={wrapperRef} className="relative h-full w-full">
@@ -270,6 +263,15 @@ function FlowCanvasInner({
         onPaneClick={() => {
           onSelectNode(null);
           onSelectEdge(null);
+        }}
+        onSelectionChange={({ nodes: selectedNodes, edges: selectedEdges }) => {
+          if (selectedNodes.length > 0) {
+            onSelectNode(selectedNodes[0].id);
+            onSelectEdge(null);
+          } else if (selectedEdges.length > 0) {
+            onSelectEdge(selectedEdges[0].id);
+            onSelectNode(null);
+          }
         }}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
@@ -335,6 +337,16 @@ function FlowCanvasInner({
           onClick={() => add("end")}
         />
         <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
+        <Tooltip label="Arrange the canvas by dependency">
+          <button
+            type="button"
+            onClick={handleTidy}
+            className="inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-[11.5px] font-medium text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+          >
+            <Wand2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Tidy flow
+          </button>
+        </Tooltip>
         <Tooltip label="Fit the whole flow in view">
           <button
             type="button"
@@ -358,7 +370,8 @@ function FlowCanvasInner({
               Start with the first step.
             </h2>
             <p className="mt-1.5 text-[12.5px] leading-5 text-muted">
-              The SIPOC sheet stays in sync as you build. Nodes added here appear in the Process lane.
+              The SIPOC sheet stays in sync as you build. Nodes added here appear in the Process
+              lane.
             </p>
             <Button variant="primary" className="mt-5" onClick={() => add("step")}>
               <Plus className="h-4 w-4" aria-hidden="true" />

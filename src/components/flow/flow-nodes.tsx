@@ -12,8 +12,7 @@ export interface AtlasNodeData extends Record<string, unknown> {
 
 export type AtlasNode = Node<AtlasNodeData>;
 
-const HANDLE_CLASS =
-  "!h-2.5 !w-2.5 !border-2 !border-surface !bg-ink-soft hover:!bg-accent";
+const HANDLE_CLASS = "!h-2.5 !w-2.5 !border-2 !border-surface !bg-ink-soft hover:!bg-accent";
 
 function KindIcon({ kind }: { kind: FlowNode["kind"] }) {
   if (kind === "start") return <Play className="h-3 w-3" aria-hidden="true" />;
@@ -35,7 +34,12 @@ export function AtlasNodeCard({ data, selected, type }: NodeProps<AtlasNode>) {
         )}
       >
         {kind === "end" ? (
-          <Handle type="target" position={Position.Left} id="in" className={cn(HANDLE_CLASS, "!border-ink !bg-paper")} />
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="in"
+            className={cn(HANDLE_CLASS, "!border-ink !bg-paper")}
+          />
         ) : null}
         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-paper/30 text-paper/80">
           <KindIcon kind={kind} />
@@ -47,7 +51,12 @@ export function AtlasNodeCard({ data, selected, type }: NodeProps<AtlasNode>) {
           <p className="truncate text-[12.5px] font-medium leading-4">{node.title}</p>
         </div>
         {kind === "start" ? (
-          <Handle type="source" position={Position.Right} id="out" className={cn(HANDLE_CLASS, "!border-ink !bg-paper")} />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="out"
+            className={cn(HANDLE_CLASS, "!border-ink !bg-paper")}
+          />
         ) : null}
       </div>
     );
@@ -80,7 +89,9 @@ export function AtlasNodeCard({ data, selected, type }: NodeProps<AtlasNode>) {
             {kind === "decision" ? "Decision" : `Step ${String(data.stepIndex).padStart(2, "0")}`}
           </span>
           {node.duration ? (
-            <span className="font-mono text-[8.5px] tracking-[0.04em] text-muted">{node.duration}</span>
+            <span className="font-mono text-[8.5px] tracking-[0.04em] text-muted">
+              {node.duration}
+            </span>
           ) : null}
         </div>
         <p className="mt-1.5 text-[13px] font-semibold leading-[1.3] text-ink">{node.title}</p>

@@ -6,6 +6,8 @@ import { Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { NODE_KIND_LABELS, type ProcessMap } from "@/domain/types";
 import { useWorkspace } from "@/store/workspace";
+import { useMediaQuery } from "@/lib/use-media-query";
+import { Inspector } from "./inspector";
 
 function FlowLoading() {
   return (
@@ -28,17 +30,19 @@ function FlowLoading() {
   );
 }
 
-const FlowCanvas = dynamic(
-  () => import("./flow-canvas").then((module) => module.FlowCanvas),
-  { ssr: false, loading: () => <FlowLoading /> },
-);
+const FlowCanvas = dynamic(() => import("./flow-canvas").then((module) => module.FlowCanvas), {
+  ssr: false,
+  loading: () => <FlowLoading />,
+});
 
 export function FlowView({
   map,
   focusNodeId,
+  onOpenSipoc,
 }: {
   map: ProcessMap;
   focusNodeId: string | null;
+  onOpenSipoc: () => void;
 }) {
   const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(
     focusNodeId && map.nodes.some((node) => node.id === focusNodeId) ? focusNodeId : null,
@@ -46,6 +50,8 @@ export function FlowView({
   const [selectedEdgeId, setSelectedEdgeId] = React.useState<string | null>(null);
   const deleteNode = useWorkspace((state) => state.deleteNode);
   const deleteEdge = useWorkspace((state) => state.deleteEdge);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const isDesktop = useMediaQuery("(min-width: 1100px)");
 
   const selectNode = React.useCallback((id: string | null) => {
     setSelectedNodeId(id);
@@ -70,6 +76,12 @@ export function FlowView({
       ? `Connection${selectedEdge.label ? `: ${selectedEdge.label}` : ""}`
       : "";
 
+  React.useEffect(() => {
+    if (selectionLabel && !isDesktop) {
+      sheetRef.current?.focus({ preventScroll: true });
+    }
+  }, [isDesktop, selectionLabel]);
+
   const deleteSelection = () => {
     if (selectedNodeId) {
       deleteNode(map.id, selectedNodeId);
@@ -88,44 +100,94 @@ export function FlowView({
     }
   };
 
+  const inspector = (
+    <Inspector
+      map={map}
+      node={selectedNode}
+      edge={selectedEdge}
+      onClose={clearSelection}
+      onSelectNode={selectNode}
+      onOpenSipoc={onOpenSipoc}
+    />
+  );
+
   return (
-    <div className="relative h-full w-full">
-      <FlowCanvas
-        map={map}
-        focusNodeId={focusNodeId}
-        selectedNodeId={selectedNodeId}
-        selectedEdgeId={selectedEdgeId}
-        onSelectNode={selectNode}
-        onSelectEdge={selectEdge}
-      />
+    <div className="flex h-full min-h-0 w-full">
+      <div className="relative min-w-0 flex-1">
+        <FlowCanvas
+          map={map}
+          focusNodeId={focusNodeId}
+          selectedNodeId={selectedNodeId}
+          selectedEdgeId={selectedEdgeId}
+          onSelectNode={selectNode}
+          onSelectEdge={selectEdge}
+        />
 
-      <p className="sr-only" role="status" aria-live="polite">
-        {selectionLabel ? `${selectionLabel} selected.` : ""}
-      </p>
+        <p className="sr-only" role="status" aria-live="polite">
+          {selectionLabel ? `${selectionLabel} selected.` : ""}
+        </p>
 
-      {selectionLabel ? (
-        <div
-          role="toolbar"
-          aria-label="Selection actions"
-          className="absolute bottom-4 left-1/2 z-20 flex max-w-[calc(100%-120px)] -translate-x-1/2 items-center gap-1 rounded-full border border-ink bg-ink p-1 pl-3 text-paper shadow-[0_12px_30px_-18px_rgba(25,24,19,.7)]"
+        {selectionLabel && isDesktop ? (
+          <div
+            role="toolbar"
+            aria-label="Selection actions"
+            className="absolute bottom-4 left-1/2 z-20 flex max-w-[calc(100%-120px)] -translate-x-1/2 items-center gap-1 rounded-full border border-ink bg-ink p-1 pl-3 text-paper shadow-[0_12px_30px_-18px_rgba(25,24,19,.7)]"
+          >
+            <span className="max-w-[220px] truncate text-[11.5px] font-medium">
+              {selectionLabel}
+            </span>
+            <button
+              type="button"
+              onClick={deleteSelection}
+              className="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11.5px] font-medium text-paper/90 transition-colors hover:bg-paper/15 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <Trash2 className="h-3 w-3" aria-hidden="true" />
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              aria-label="Clear selection"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-paper/70 transition-colors hover:bg-paper/15 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {selectionLabel && isDesktop ? (
+        <aside
+          aria-label="Flow inspector"
+          className="flex w-[320px] shrink-0 flex-col border-l border-line bg-paper-raised"
         >
-          <span className="max-w-[220px] truncate text-[11.5px] font-medium">{selectionLabel}</span>
+          {inspector}
+        </aside>
+      ) : null}
+
+      {selectionLabel && !isDesktop ? (
+        <div>
           <button
             type="button"
-            onClick={deleteSelection}
-            className="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11.5px] font-medium text-paper/90 transition-colors hover:bg-paper/15 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            <Trash2 className="h-3 w-3" aria-hidden="true" />
-            Delete
-          </button>
-          <button
-            type="button"
+            aria-label="Close inspector"
             onClick={clearSelection}
-            aria-label="Clear selection"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-paper/70 transition-colors hover:bg-paper/15 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="fixed inset-0 z-30 bg-ink/20"
+          />
+          <div
+            ref={sheetRef}
+            role="region"
+            aria-label="Flow inspector"
+            tabIndex={-1}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation();
+                clearSelection();
+              }
+            }}
+            className="fixed inset-y-0 right-0 z-40 flex w-[min(92vw,360px)] flex-col border-l border-line bg-paper-raised shadow-[-20px_0_50px_-30px_rgba(25,24,19,.45)] focus:outline-none"
           >
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
+            {inspector}
+          </div>
         </div>
       ) : null}
     </div>

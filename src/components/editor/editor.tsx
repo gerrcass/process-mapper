@@ -247,7 +247,11 @@ export function Editor({ mapId }: { mapId: string }) {
         </main>
       ) : (
         <main className="editor-main flex-1 overflow-hidden">
-          <FlowView map={map} focusNodeId={searchParams.get("node")} />
+          <FlowView
+            map={map}
+            focusNodeId={searchParams.get("node")}
+            onOpenSipoc={() => router.push(`/maps/${map.id}`)}
+          />
         </main>
       )}
 
