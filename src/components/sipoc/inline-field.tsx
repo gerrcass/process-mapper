@@ -28,8 +28,13 @@ export function InlineField({
 }) {
   const [draft, setDraft] = React.useState(value);
   const [editing, setEditing] = React.useState(false);
+  const cancelRef = React.useRef(false);
 
   const commit = () => {
+    if (cancelRef.current) {
+      cancelRef.current = false;
+      return;
+    }
     setEditing(false);
     const next = draft.trim();
     if (next === value) {
@@ -58,11 +63,17 @@ export function InlineField({
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        cancelRef.current = true;
         setDraft(value);
         setEditing(false);
         event.currentTarget.blur();
       }
       if (event.key === "Enter" && !multiline) {
+        if (!draft.trim()) {
+          event.preventDefault();
+          onReject?.();
+          return;
+        }
         event.preventDefault();
         event.currentTarget.blur();
       }

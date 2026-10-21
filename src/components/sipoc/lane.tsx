@@ -24,7 +24,7 @@ import { cn } from "@/lib/cn";
 import { Tooltip } from "@/components/ui/tooltip";
 import { EntryCard } from "./entry-card";
 import { StepCard } from "./step-card";
-import { SortableRow } from "./sortable-row";
+import { SortableRow, type SortableHandleProps } from "./sortable-row";
 import { LANE_STYLES } from "./lane-styles";
 
 const EXAMPLES: Record<EntryLane, Array<{ label: string; detail: string }>> = {
@@ -72,10 +72,19 @@ function NewEntryComposer({ mapId, lane }: { mapId: string; lane: EntryLane }) {
     labelRef.current?.focus();
   };
 
+  const close = () => {
+    setOpen(false);
+    setLabel("");
+    setDetail("");
+    setError(null);
+    window.setTimeout(() => document.getElementById(`add-${lane}`)?.focus(), 0);
+  };
+
   if (!open) {
     return (
       <button
         type="button"
+        id={`add-${lane}`}
         onClick={() => setOpen(true)}
         className="mt-2 inline-flex w-full items-center gap-1.5 rounded-[8px] border border-dashed border-line-strong bg-surface/40 px-2.5 py-2 text-left text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-soft hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
@@ -95,10 +104,7 @@ function NewEntryComposer({ mapId, lane }: { mapId: string; lane: EntryLane }) {
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
-          setOpen(false);
-          setLabel("");
-          setDetail("");
-          setError(null);
+          close();
         }
       }}
     >
@@ -143,12 +149,7 @@ function NewEntryComposer({ mapId, lane }: { mapId: string; lane: EntryLane }) {
       <div className="mt-2 flex items-center justify-end gap-1.5">
         <button
           type="button"
-          onClick={() => {
-            setOpen(false);
-            setLabel("");
-            setDetail("");
-            setError(null);
-          }}
+          onClick={close}
           className="rounded-[5px] px-2 py-1 text-[11.5px] text-muted transition-colors hover:bg-paper-raised hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           Cancel
@@ -188,10 +189,18 @@ function NewStepComposer({ mapId }: { mapId: string }) {
     titleRef.current?.focus();
   };
 
+  const close = () => {
+    setOpen(false);
+    setTitle("");
+    setError(null);
+    window.setTimeout(() => document.getElementById("add-process")?.focus(), 0);
+  };
+
   if (!open) {
     return (
       <button
         type="button"
+        id="add-process"
         onClick={() => setOpen(true)}
         className="mt-2 inline-flex w-full items-center gap-1.5 rounded-[8px] border border-dashed border-process-line bg-surface/50 px-2.5 py-2 text-left text-[12px] font-medium text-process-text transition-colors hover:border-process-text hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
@@ -211,9 +220,7 @@ function NewStepComposer({ mapId }: { mapId: string }) {
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
-          setOpen(false);
-          setTitle("");
-          setError(null);
+          close();
         }
       }}
     >
@@ -240,11 +247,7 @@ function NewStepComposer({ mapId }: { mapId: string }) {
       <div className="mt-2 flex items-center justify-end gap-1.5">
         <button
           type="button"
-          onClick={() => {
-            setOpen(false);
-            setTitle("");
-            setError(null);
-          }}
+          onClick={close}
           className="rounded-[5px] px-2 py-1 text-[11.5px] text-muted transition-colors hover:bg-paper-raised hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
         >
           Cancel
@@ -259,6 +262,29 @@ function NewStepComposer({ mapId }: { mapId: string }) {
       </div>
     </form>
   );
+}
+
+function withArrowReordering(
+  handleProps: SortableHandleProps["handleProps"],
+  options: {
+    index: number;
+    length: number;
+    isDragging: boolean;
+    move: (from: number, to: number) => void;
+  },
+) {
+  return {
+    ...handleProps,
+    onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      handleProps.onKeyDown?.(event);
+      if (options.isDragging || event.defaultPrevented) return;
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+      event.preventDefault();
+      const target = event.key === "ArrowUp" ? options.index - 1 : options.index + 1;
+      if (target < 0 || target >= options.length) return;
+      options.move(options.index, target);
+    },
+  };
 }
 
 export function Lane({
@@ -374,18 +400,27 @@ export function Lane({
               {isProcess
                 ? steps.map((step, index) => (
                     <SortableRow key={step.id} id={step.id}>
-                      {({ handleProps }) => (
+                      {({ handleProps, isDragging }) => (
                         <StepCard
                           step={step}
                           index={index}
                           readOnly={readOnly}
-                          handleProps={handleProps}
+                          handleProps={withArrowReordering(handleProps, {
+                            index,
+                            length: items.length,
+                            isDragging,
+                            move: (from, to) => reorderStep(mapId, from, to),
+                          })}
                           onOpenFlow={() => onOpenFlow(step.id)}
                           onCommit={(field, value) => editNode(mapId, step.id, { [field]: value })}
                           onRejectTitle={() => toast("A step title cannot be empty.")}
                           onDelete={() => {
                             deleteNode(mapId, step.id);
                             toast("Step removed from the flow and SIPOC.");
+                            window.setTimeout(
+                              () => document.getElementById("add-process")?.focus(),
+                              0,
+                            );
                           }}
                         />
                       )}
@@ -393,14 +428,19 @@ export function Lane({
                   ))
                 : entries.map((entry, index) => (
                     <SortableRow key={entry.id} id={entry.id}>
-                      {({ handleProps }) => (
+                      {({ handleProps, isDragging }) => (
                         <EntryCard
                           entry={entry}
                           index={index}
                           laneName={meta.name}
                           laneStyle={style}
                           readOnly={readOnly}
-                          handleProps={handleProps}
+                          handleProps={withArrowReordering(handleProps, {
+                            index,
+                            length: items.length,
+                            isDragging,
+                            move: (from, to) => reorderEntry(mapId, lane as EntryLane, from, to),
+                          })}
                           onCommitLabel={(value) =>
                             editEntry(mapId, lane as EntryLane, entry.id, { label: value })
                           }
@@ -411,6 +451,10 @@ export function Lane({
                           onDelete={() => {
                             deleteEntry(mapId, lane as EntryLane, entry.id);
                             toast("Entry removed.");
+                            window.setTimeout(
+                              () => document.getElementById(`add-${lane}`)?.focus(),
+                              0,
+                            );
                           }}
                         />
                       )}
