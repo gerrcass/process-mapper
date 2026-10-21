@@ -9,6 +9,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - The store is the only mutation path. Components call store actions; they do not assemble partial documents or mutate nested objects.
 - Validate at the edge: persisted state, imported JSON, and file input. Once validated, internal code can trust the document type.
 - Keep the flow/node adapter separate from the domain model so React Flow types do not leak into domain tests.
+- Entity IDs inside pure operations are deterministic (`nextEntityId(...)`) or injected. Random identity belongs to the store or import boundary, never to a pure map operation.
 
 ## React and Next.js
 
@@ -18,6 +19,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - Effects are for synchronization with the outside world, not for deriving state. Compute derived values during render.
 - Keep state close to its use; lift it only when two views genuinely share it (the map document is the deliberate exception).
 - Keyboard behaviour must be deliberate. Destructive keys require selection or confirmation, and text fields must not lose normal editing shortcuts.
+- Global keyboard handlers ignore text fields, selects, contenteditable regions, and open dialogs. Scope a destructive shortcut to the surface that owns the selection where practical.
 
 ## Naming and structure
 
