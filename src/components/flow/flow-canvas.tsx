@@ -380,7 +380,6 @@ function FlowCanvasInner({
         minZoom={0.2}
         maxZoom={2}
         deleteKeyCode={null}
-        proOptions={{ hideAttribution: true }}
         nodesFocusable
         edgesFocusable
         className="bg-paper"
@@ -399,7 +398,7 @@ function FlowCanvasInner({
           nodeColor={miniMapColor}
           nodeStrokeWidth={2}
           maskColor="var(--color-paper-mask)"
-          className="!bottom-4 !right-4 hidden sm:block"
+          className="!bottom-10 !right-4 hidden sm:block"
           ariaLabel="Flow minimap"
         />
       </ReactFlow>

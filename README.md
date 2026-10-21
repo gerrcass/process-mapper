@@ -2,7 +2,7 @@
 
 [**Open the live demo →**](https://gerrcass.github.io/process-mapper/)
 
-A local-first SIPOC and process-mapping workspace. Frame a process as a five-lane SIPOC sheet, map the flow behind it, and leave with something you can share. No account, backend, or environment variables.
+A local-first SIPOC and process-mapping workspace. Frame a process as a five-lane SIPOC sheet, map the flow behind it, and leave with something you can share. No account, backend, or runtime configuration.
 
 [![The Process Atlas workspace with two seeded process maps and a template gallery](docs/screenshots/01-workspace.png)](https://gerrcass.github.io/process-mapper/)
 
@@ -96,18 +96,19 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-| Command          | Does                                         |
-| ---------------- | -------------------------------------------- |
-| `pnpm dev`       | Development server                           |
-| `pnpm build`     | Production build                             |
-| `pnpm start`     | Serve the production build                   |
-| `pnpm lint`      | ESLint                                       |
-| `pnpm typecheck` | `tsc --noEmit`                               |
-| `pnpm test`      | Vitest in watch mode                         |
-| `pnpm test:run`  | Unit and component tests once                |
-| `pnpm test:e2e`  | Playwright journeys                          |
-| `pnpm verify`    | Lint, typecheck, tests, and production build |
-| `pnpm format`    | Prettier                                     |
+| Command             | Does                                |
+| ------------------- | ----------------------------------- |
+| `pnpm dev`          | Development server                  |
+| `pnpm build`        | Production build                    |
+| `pnpm start`        | Serve the production build          |
+| `pnpm lint`         | ESLint                              |
+| `pnpm typecheck`    | `tsc --noEmit`                      |
+| `pnpm test`         | Vitest in watch mode                |
+| `pnpm test:run`     | Unit and component tests once       |
+| `pnpm test:e2e`     | Playwright journeys                 |
+| `pnpm build:static` | Static export for GitHub Pages      |
+| `pnpm verify`       | Lint, typecheck, tests, both builds |
+| `pnpm format`       | Prettier                            |
 
 No `.env` file is needed.
 
@@ -124,6 +125,8 @@ Tests sit at the seams where the product can fail without a browser:
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
+
+CI runs lint, typecheck, unit/component tests, the server build, the static export, and the browser journeys. `pnpm verify` covers everything except the Playwright journeys.
 
 ## Architecture
 
@@ -181,13 +184,13 @@ pnpm build
 pnpm start
 ```
 
-The Pages build is the same app with static export enabled:
+The Pages build is the same app with static export enabled. Reproduce it locally with:
 
 ```bash
-GITHUB_PAGES=true PAGES_BASE_PATH=/process-mapper pnpm build
+pnpm build:static
 ```
 
-The workflow supplies `PAGES_BASE_PATH` and `NEXT_PUBLIC_SITE_URL` from the Pages environment, so metadata and Open Graph assets resolve against the deployed origin. No environment variables are needed for local development.
+The workflow supplies `PAGES_BASE_PATH` and `NEXT_PUBLIC_SITE_URL` from the Pages environment, so metadata and Open Graph assets resolve against the deployed origin. No runtime environment variables are needed for local development.
 
 ## Scope
 

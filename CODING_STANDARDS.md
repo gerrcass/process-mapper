@@ -21,6 +21,12 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - Keyboard behaviour must be deliberate. Destructive keys require selection or confirmation, and text fields must not lose normal editing shortcuts.
 - Global keyboard handlers ignore text fields, selects, contenteditable regions, and open dialogs. Scope a destructive shortcut to the surface that owns the selection where practical.
 
+### Static export
+
+- Keep the app exportable. The editor is the static `/maps?map=<id>` route. Dynamic routes, request-dependent route handlers, server actions, and redirects/rewrites break the GitHub Pages build.
+- Run `pnpm build:static` after changing routes, metadata, fonts, public assets, or anything that could affect prerendering. A green server build is not enough.
+- Pages deploys under `/process-mapper`. Use `mapHref` and Next's `basePath` support rather than hardcoding root-relative application URLs.
+
 ## Naming and structure
 
 - Name by behaviour and domain meaning, not by UI accident: `reorderSteps`, not `handleDrop2`; `readiness`, not `scoreThing`.
