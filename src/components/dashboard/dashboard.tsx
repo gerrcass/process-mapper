@@ -13,6 +13,7 @@ import type { ProcessMap } from "@/domain/types";
 import { MapCard } from "./map-card";
 import { NewMapDialog } from "./new-map-dialog";
 import { ResetDemoDialog } from "./reset-demo-dialog";
+import { TemplateGallery } from "./template-gallery";
 
 export function Dashboard() {
   const maps = useWorkspace((state) => state.maps);
@@ -23,6 +24,7 @@ export function Dashboard() {
   const canRedo = useWorkspace((state) => state.future.length > 0);
   const [query, setQuery] = React.useState("");
   const [newMapOpen, setNewMapOpen] = React.useState(false);
+  const [newMapTemplate, setNewMapTemplate] = React.useState<string | null>(null);
   const [resetOpen, setResetOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<ProcessMap | null>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -62,6 +64,11 @@ export function Dashboard() {
     if (!copyId) return;
     setQuery("");
     toast("Map duplicated.");
+  };
+
+  const openNewMap = (templateId: string | null = null) => {
+    setNewMapTemplate(templateId);
+    setNewMapOpen(true);
   };
 
   return (
@@ -150,7 +157,7 @@ export function Dashboard() {
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Reset demo</span>
             </Button>
-            <Button variant="primary" onClick={() => setNewMapOpen(true)}>
+            <Button variant="primary" onClick={() => openNewMap()}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               New map
             </Button>
@@ -167,7 +174,7 @@ export function Dashboard() {
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <Button onClick={() => setResetOpen(true)}>Restore demo maps</Button>
-            <Button variant="primary" onClick={() => setNewMapOpen(true)}>
+            <Button variant="primary" onClick={() => openNewMap()}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               Create a map
             </Button>
@@ -198,13 +205,22 @@ export function Dashboard() {
         </div>
       )}
 
+      <TemplateGallery onUseTemplate={(templateId) => openNewMap(templateId)} />
+
       <p className="mt-10 max-w-[64ch] text-[11.5px] leading-5 text-muted">
         Seeded maps are local demo content. Edits autosave to this browser and can be exported as
         JSON from any map. Press{" "}
         <kbd className="rounded border border-line bg-surface px-1 font-mono">/</kbd> to search.
       </p>
 
-      {newMapOpen ? <NewMapDialog open={newMapOpen} onOpenChange={setNewMapOpen} /> : null}
+      {newMapOpen ? (
+        <NewMapDialog
+          key={newMapTemplate ?? "blank"}
+          open={newMapOpen}
+          onOpenChange={setNewMapOpen}
+          initialTemplateId={newMapTemplate === "blank" ? null : newMapTemplate}
+        />
+      ) : null}
       {resetOpen ? <ResetDemoDialog open={resetOpen} onOpenChange={setResetOpen} /> : null}
       {deleteTarget ? (
         <DeleteMapDialog

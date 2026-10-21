@@ -36,16 +36,21 @@ const TINT_BARS = [
 export function NewMapDialog({
   open,
   onOpenChange,
+  initialTemplateId = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTemplateId?: string | null;
 }) {
   const router = useRouter();
   const createMap = useWorkspace((state) => state.createMap);
-  const [selection, setSelection] = React.useState("blank");
-  const [title, setTitle] = React.useState("");
+  const initialTemplate = initialTemplateId
+    ? MAP_TEMPLATES.find((template) => template.id === initialTemplateId)
+    : undefined;
+  const [selection, setSelection] = React.useState(initialTemplate?.id ?? "blank");
+  const [title, setTitle] = React.useState(initialTemplate?.name ?? "");
   const [description, setDescription] = React.useState("");
-  const [suggestedTitle, setSuggestedTitle] = React.useState("");
+  const [suggestedTitle, setSuggestedTitle] = React.useState(initialTemplate?.name ?? "");
   const [error, setError] = React.useState<string | null>(null);
 
   const choose = (id: string, name: string) => {

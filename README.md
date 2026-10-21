@@ -13,7 +13,7 @@ The workspace opens with two complete seeded maps:
 - **Customer support escalation** — a Priority 1 ticket from first contact to customer update and root-cause review.
 - **New hire onboarding** — a signed offer through first-week orientation and a 30-day plan.
 
-Three templates are available for new maps: support escalation, new hire onboarding, and purchase order approval, plus a blank option.
+Three templates are available for new maps: support escalation, new hire onboarding, and purchase order approval, plus a blank option. They are available from the dashboard gallery and the New map dialog.
 
 ## Two views, one document
 
@@ -39,6 +39,7 @@ Canvas position and SIPOC order are deliberately independent. Dragging a node ch
 ## What is in the product
 
 - **Workspace** — seeded maps, search across titles and descriptions, recent-first order, status pills, step and entry counts, duplicate and confirmed delete.
+- **Template gallery** — three complete starting points plus a blank map, available directly from the dashboard.
 - **SIPOC editing** — inline add, label and detail editing with Enter or blur to commit and Escape to cancel, drag reordering, arrow-key reordering, deliberate delete, contextual examples in empty lanes.
 - **Process steps** — add from the SIPOC Process lane, edit title, description, owner, system, and duration, reorder without moving the canvas, jump to the node in the flow.
 - **Flow canvas** — pan, zoom, fit view, minimap, custom start, step, decision, and end nodes, labelled flow and exception edges, connect by handle, delete with clear feedback, empty-flow starting action.

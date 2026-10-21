@@ -72,4 +72,19 @@ describe("dashboard search", () => {
     ).toBeInTheDocument();
     expect(useWorkspace.getState().maps).toHaveLength(3);
   });
+
+  it("starts a new map from a gallery template with the title prefilled", async () => {
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <Dashboard />
+      </TooltipProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Use Purchase order approval template" }));
+
+    expect(screen.getByRole("heading", { name: "New map" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Title")).toHaveValue("Purchase order approval");
+    expect(screen.getByRole("radio", { name: /Purchase order approval/ })).toBeChecked();
+  });
 });
