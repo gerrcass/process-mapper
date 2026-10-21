@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+build
+coverage
+pnpm-lock.yaml
+playwright-report
+test-results
+next-env.d.ts
+docs
+.agents
+AGENTS.md
+GLOSSARY.md
+CODING_STANDARDS.md
