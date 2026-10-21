@@ -12,12 +12,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         gap={10}
         toastOptions={{
           style: {
-            background: "#FFFFFF",
-            border: "1px solid #DFD9CB",
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-line)",
             borderRadius: "14px",
-            color: "#191813",
+            color: "var(--color-ink)",
             fontFamily: "var(--font-geist-sans)",
-            boxShadow: "0 1px 2px rgba(25,24,19,.04), 0 16px 40px -24px rgba(25,24,19,.28)",
+            boxShadow: "var(--shadow-soft)",
           },
         }}
       />

@@ -19,7 +19,7 @@ import {
   updateEntry,
   updateMapDetails,
   updateNode,
-  validateConnection,
+  validateEdge,
 } from "@/domain/operations";
 import { TEST_NOW, makeMap } from "@/test/fixtures";
 
@@ -163,13 +163,13 @@ describe("flow edges", () => {
     map = addNode(map, { kind: "end", title: "Two" }, TEST_NOW);
     const [one, two] = map.nodes;
 
-    expect(validateConnection(map, one.id, one.id).ok).toBe(false);
+    expect(validateEdge(map, one.id, one.id).ok).toBe(false);
     expect(() => addEdge(map, { source: one.id, target: one.id }, TEST_NOW)).toThrow(
       MapOperationError,
     );
 
     const connected = addEdge(map, { source: one.id, target: two.id }, TEST_NOW);
-    expect(validateConnection(connected, one.id, two.id)).toMatchObject({ ok: false });
+    expect(validateEdge(connected, one.id, two.id)).toMatchObject({ ok: false });
     expect(() => addEdge(connected, { source: one.id, target: two.id }, TEST_NOW)).toThrow(
       MapOperationError,
     );

@@ -82,7 +82,7 @@ test("lifecycle journey creates from a template, searches, deletes, and imports 
   page,
 }) => {
   await page.getByRole("button", { name: "New map" }).click();
-  await page.locator("label").filter({ hasText: "New hire onboarding" }).click();
+  await page.getByRole("dialog").getByText("New hire onboarding", { exact: true }).click();
   const title = page.getByLabel("Title");
   await title.fill("Onboarding v2");
   await page.getByRole("button", { name: "Create map" }).click();
@@ -179,14 +179,67 @@ test("the dashboard and editor remain usable at phone width", async ({ page }) =
   );
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
 
+  await page.getByRole("button", { name: "New map" }).click();
+  const newMapDialog = page.getByRole("dialog");
+  await expect(newMapDialog).toBeVisible();
+  await expect(newMapDialog.getByRole("button", { name: "Create map" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(newMapDialog).toHaveCount(0);
+
   await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
   await expect(page.getByRole("region", { name: "Suppliers" })).toBeVisible();
+  await page.getByRole("button", { name: /Review map/ }).click();
+  await expect(
+    page.getByRole("dialog").getByRole("heading", { name: "Ready to share" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
   await page
     .getByRole("navigation", { name: "Map views" })
     .getByRole("link", { name: "Flow" })
     .click();
   await page.getByRole("button", { name: "Add step node" }).click();
-  await expect(page.getByRole("region", { name: "Flow inspector" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Flow inspector" })).toBeVisible();
   await page.getByRole("button", { name: "Close inspector" }).click();
-  await expect(page.getByRole("region", { name: "Flow inspector" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Flow inspector" })).toHaveCount(0);
+});
+
+test("tablet width keeps the SIPOC board and inspector usable", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 1000 });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Frame the process/ })).toBeVisible();
+  await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
+  await expect(page.getByRole("region", { name: "Suppliers" })).toBeVisible();
+  const scrolls = await page.evaluate(() => {
+    const scroller = document.querySelector(".lane-scroll");
+    return scroller ? scroller.scrollWidth > scroller.clientWidth : false;
+  });
+  expect(scrolls).toBe(true);
+
+  await page
+    .getByRole("navigation", { name: "Map views" })
+    .getByRole("link", { name: "Flow" })
+    .click();
+  await page.getByRole("button", { name: "Select a flow node" }).click();
+  await page.getByRole("menuitem", { name: /Assign an incident owner/ }).click();
+  const inspector = page.getByRole("dialog", { name: "Flow inspector" });
+  await expect(inspector).toBeVisible();
+  await expect(inspector.getByRole("textbox", { name: "Title" })).toHaveValue(
+    "Assign an incident owner",
+  );
+  await inspector.getByRole("button", { name: "Close inspector" }).click();
+  await expect(inspector).toHaveCount(0);
+});
+
+test("a deep-linked node does not hijack later inspector edits", async ({ page }) => {
+  await page.goto("/maps/map-support-escalation?view=flow&node=support-node-triage");
+  const title = page.getByRole("textbox", { name: "Title", exact: true });
+  await expect(title).toHaveValue("Triage the ticket");
+
+  await page.getByRole("button", { name: "Select a flow node" }).click();
+  await page.getByRole("menuitem", { name: /Assign an incident owner/ }).click();
+  await expect(title).toHaveValue("Assign an incident owner");
+
+  await title.fill("Assign the incident owner");
+  await title.press("Enter");
+  await expect(title).toHaveValue("Assign the incident owner");
 });

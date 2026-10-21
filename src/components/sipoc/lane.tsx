@@ -381,7 +381,7 @@ export function Lane({
           <div className="rounded-[8px] border border-dashed border-line-strong/70 bg-surface/35 p-2.5">
             <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted">Examples</p>
             <ul className="mt-1.5 space-y-1.5">
-              {EXAMPLES[lane as EntryLane].map((example) => (
+              {EXAMPLES[lane as EntryLane].slice(0, 1).map((example) => (
                 <li key={example.label} className="border-l border-line-strong pl-2">
                   <p className="text-[11.5px] font-medium leading-4 text-ink-soft">
                     {example.label}

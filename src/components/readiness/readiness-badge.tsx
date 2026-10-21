@@ -4,9 +4,9 @@ import { cn } from "@/lib/cn";
 import type { ReadinessLevel } from "@/domain/readiness";
 
 function readinessColor(score: number): string {
-  if (score === 100) return "#3E6B4F";
-  if (score >= 70) return "#A97419";
-  return "#D14A24";
+  if (score === 100) return "var(--color-success)";
+  if (score >= 70) return "var(--color-warning)";
+  return "var(--color-accent)";
 }
 
 export function ReadinessRing({
@@ -36,7 +36,7 @@ export function ReadinessRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#DFD9CB"
+          stroke="var(--color-line)"
           strokeWidth={stroke}
         />
         <circle

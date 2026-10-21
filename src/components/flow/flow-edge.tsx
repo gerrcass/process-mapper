@@ -38,7 +38,11 @@ export function AtlasFlowEdge({
   });
   const edge = data?.edge;
   const exception = edge?.kind === "exception";
-  const stroke = selected ? "#D14A24" : exception ? "#A97419" : "#8A8579";
+  const stroke = selected
+    ? "var(--color-accent)"
+    : exception
+      ? "var(--color-warning)"
+      : "var(--color-muted)";
 
   return (
     <>
@@ -59,7 +63,7 @@ export function AtlasFlowEdge({
             className={cn(
               "nodrag nopan absolute rounded-full border px-1.5 py-0.5 font-mono text-[9px] leading-4 shadow-sm",
               exception
-                ? "border-warning/30 bg-warning-soft text-warning"
+                ? "border-warning/30 bg-warning-soft text-warning-strong"
                 : "border-line bg-surface text-ink-soft",
             )}
             style={{

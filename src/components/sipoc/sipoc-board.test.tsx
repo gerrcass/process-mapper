@@ -90,6 +90,19 @@ describe("SIPOC entry editing", () => {
     expect(map.sipoc.suppliers[0].label).toBe("Support queue");
   });
 
+  it("clears an optional detail while keeping a required label", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const detail = screen.getByLabelText("Suppliers entry 1 detail");
+    await user.clear(detail);
+    await user.keyboard("{Enter}");
+
+    const map = supportMap();
+    expect(map.sipoc.suppliers[0].detail).toBe("");
+    expect(map.sipoc.suppliers[0].label).toBe("Support inbox");
+  });
+
   it("rejects an empty label without writing to the map", async () => {
     const user = userEvent.setup();
     setup();
@@ -165,7 +178,7 @@ function supportMap() {
 }
 
 describe("SIPOC process steps", () => {
-  it("adds a step with the next SIPOC order and a connection from the last step", async () => {
+  it("adds a step with the next SIPOC order and an edge from the last step", async () => {
     const user = userEvent.setup();
     setup();
 

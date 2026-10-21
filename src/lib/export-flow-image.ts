@@ -39,7 +39,7 @@ export async function exportFlowPng(
   const viewport = getViewportForBounds(bounds, width, height, 0.2, 2, 0.06);
   const { toPng } = await import("html-to-image");
   const dataUrl = await toPng(element, {
-    backgroundColor: "#F4F1E9",
+    backgroundColor: "var(--color-paper)",
     width,
     height,
     pixelRatio: 2,

@@ -118,18 +118,8 @@ export function Editor({ mapId }: { mapId: string }) {
       window.setTimeout(() => document.getElementById("flow-view")?.focus(), 360);
       return;
     }
-    const targetLane =
-      check.id === "suppliers"
-        ? "suppliers"
-        : check.id === "inputs"
-          ? "inputs"
-          : check.id === "outputs"
-            ? "outputs"
-            : check.id === "customers"
-              ? "customers"
-              : "process";
     if (view !== "sipoc") router.push(sipocHref);
-    window.setTimeout(() => document.getElementById(`lane-${targetLane}`)?.focus(), 360);
+    window.setTimeout(() => document.getElementById(`lane-${check.focus}`)?.focus(), 360);
   };
 
   const duplicate = () => {
@@ -160,8 +150,9 @@ export function Editor({ mapId }: { mapId: string }) {
               onCommit={(value) => updateDetails(map.id, { title: value })}
               onReject={() => toast("A map title cannot be empty.")}
               ariaLabel="Map title"
+              required
               className="w-[min(42vw,430px)] shrink-0"
-              inputClassName="truncate font-display text-[24px] leading-8 tracking-[-0.01em] text-ink sm:text-[27px]"
+              inputClassName="truncate font-display text-[26px] leading-9 tracking-[-0.01em] text-ink sm:text-[30px]"
             />
             <div className="hidden shrink-0 sm:block">
               <StatusMenu mapId={map.id} status={map.status} />
@@ -236,9 +227,7 @@ export function Editor({ mapId }: { mapId: string }) {
               aria-current={view === "sipoc" ? "page" : undefined}
               className={cn(
                 "rounded-[7px] px-3 py-1 text-[12.5px] font-medium transition-colors",
-                view === "sipoc"
-                  ? "bg-surface text-ink shadow-[0_1px_2px_rgba(25,24,19,.06)]"
-                  : "text-muted hover:text-ink",
+                view === "sipoc" ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink",
               )}
             >
               SIPOC
@@ -248,9 +237,7 @@ export function Editor({ mapId }: { mapId: string }) {
               aria-current={view === "flow" ? "page" : undefined}
               className={cn(
                 "rounded-[7px] px-3 py-1 text-[12.5px] font-medium transition-colors",
-                view === "flow"
-                  ? "bg-surface text-ink shadow-[0_1px_2px_rgba(25,24,19,.06)]"
-                  : "text-muted hover:text-ink",
+                view === "flow" ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink",
               )}
             >
               Flow
@@ -258,6 +245,9 @@ export function Editor({ mapId }: { mapId: string }) {
           </div>
 
           <div className="flex items-center gap-3 text-[11px] text-muted">
+            <span className="text-[10.5px] font-medium text-ink-soft sm:hidden">
+              {readiness.level}
+            </span>
             <span className="hidden md:inline">
               <span className="font-medium text-ink-soft">{stats.steps}</span> steps
               <span className="mx-1.5 text-line-strong" aria-hidden="true">
@@ -292,11 +282,13 @@ export function Editor({ mapId }: { mapId: string }) {
         </main>
       ) : (
         <main className="editor-main flex-1 overflow-hidden">
-          <FlowView
-            map={map}
-            focusNodeId={searchParams.get("node")}
-            onOpenSipoc={() => router.push(`/maps/${map.id}`)}
-          />
+          <div id="flow-view" tabIndex={-1} className="h-full focus:outline-none">
+            <FlowView
+              map={map}
+              focusNodeId={searchParams.get("node")}
+              onOpenSipoc={() => router.push(`/maps/${map.id}`)}
+            />
+          </div>
         </main>
       )}
 

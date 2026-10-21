@@ -174,7 +174,7 @@ pnpm build
 pnpm start
 ```
 
-The layout sets `metadataBase` to `http://localhost:3000` so Open Graph image URLs resolve in local development. Change that one value in `src/app/layout.tsx` to the deployed origin when publishing.
+Open Graph URLs resolve from `NEXT_PUBLIC_SITE_URL` when set, then Vercel's production URL, then `http://localhost:3000`. No variable is required to run or deploy; set `NEXT_PUBLIC_SITE_URL` only if social previews need a specific public origin on another host.
 
 ## Scope
 

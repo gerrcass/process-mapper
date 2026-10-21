@@ -35,8 +35,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { NODE_KIND_LABELS, type FlowNodeKind, type ProcessMap } from "@/domain/types";
-import { processSteps, validateConnection } from "@/domain/operations";
+import { processSteps, validateEdge } from "@/domain/operations";
 import { useWorkspace } from "@/store/workspace";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -71,6 +72,7 @@ function toNodes(map: ProcessMap, selectedNodeId: string | null): AtlasNode[] {
     position: { ...node.position },
     selected: node.id === selectedNodeId,
     data: { node, stepIndex: indexes.get(node.id) ?? 1 } satisfies AtlasNodeData,
+    ariaLabel: `${NODE_KIND_LABELS[node.kind]} ${node.title}`,
   }));
 }
 
@@ -84,19 +86,20 @@ function toEdges(map: ProcessMap, selectedEdgeId: string | null): AtlasEdge[] {
     type: "atlas",
     selected: edge.id === selectedEdgeId,
     data: { edge } satisfies AtlasEdgeData,
+    ariaLabel: edge.label ? `Flow edge ${edge.label}` : "Flow edge",
     markerEnd: {
       type: MarkerType.ArrowClosed,
       width: 18,
       height: 18,
-      color: edge.kind === "exception" ? "#A97419" : "#8A8579",
+      color: edge.kind === "exception" ? "var(--color-warning)" : "var(--color-muted)",
     },
   }));
 }
 
 function miniMapColor(node: AtlasNode): string {
-  if (node.type === "start" || node.type === "end") return "#191813";
-  if (node.type === "decision") return "#A97419";
-  return "#D14A24";
+  if (node.type === "start" || node.type === "end") return "var(--color-ink)";
+  if (node.type === "decision") return "var(--color-warning)";
+  return "var(--color-accent)";
 }
 
 function ToolbarButton({
@@ -151,6 +154,9 @@ function FlowCanvasInner({
   const tidyFlow = useWorkspace((state) => state.tidyFlow);
   const setViewport = useWorkspace((state) => state.setViewport);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const focusHandled = React.useRef<string | null>(null);
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const motionDuration = reduceMotion ? 0 : 280;
 
   React.useEffect(() => {
     setNodes(toNodes(map, selectedNodeId));
@@ -162,19 +168,20 @@ function FlowCanvasInner({
   }, [map.edges, map, selectedEdgeId, setEdges]);
 
   React.useEffect(() => {
-    if (!focusNodeId) return;
+    if (!focusNodeId || focusHandled.current === focusNodeId) return;
     const node = map.nodes.find((candidate) => candidate.id === focusNodeId);
     if (!node) return;
+    focusHandled.current = focusNodeId;
     onSelectNode(focusNodeId);
     onSelectEdge(null);
     const timer = window.setTimeout(() => {
       void setCenter(node.position.x + 114, node.position.y + 45, {
         zoom: 1,
-        duration: 280,
+        duration: motionDuration,
       });
     }, 80);
     return () => window.clearTimeout(timer);
-  }, [focusNodeId, map.nodes, onSelectEdge, onSelectNode, setCenter]);
+  }, [focusNodeId, map.nodes, motionDuration, onSelectEdge, onSelectNode, setCenter]);
 
   React.useEffect(() => {
     const handleExport = () => {
@@ -223,6 +230,7 @@ function FlowCanvasInner({
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('[role="dialog"][data-state="open"]')) return;
       if (event.key === "Escape") {
         onSelectNode(null);
         onSelectEdge(null);
@@ -238,7 +246,7 @@ function FlowCanvasInner({
         event.preventDefault();
         deleteEdge(map.id, selectedEdgeId);
         onSelectEdge(null);
-        toast("Connection removed.");
+        toast("Edge removed.");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -257,7 +265,10 @@ function FlowCanvasInner({
       .maps.find((candidate) => candidate.id === map.id)
       ?.nodes.find((candidate) => candidate.id === nodeId);
     if (!node) return;
-    void setCenter(node.position.x + 114, node.position.y + 45, { zoom: 1, duration: 280 });
+    void setCenter(node.position.x + 114, node.position.y + 45, {
+      zoom: 1,
+      duration: motionDuration,
+    });
   };
 
   const add = (kind: FlowNodeKind) => {
@@ -287,13 +298,13 @@ function FlowCanvasInner({
     tidyFlow(map.id);
     toast("Flow tidied. SIPOC order is unchanged.");
     window.setTimeout(() => {
-      void fitView({ padding: 0.18, duration: 280 });
+      void fitView({ padding: 0.18, duration: motionDuration });
     }, 80);
   };
 
   const isValidConnection: IsValidConnection = (connection) => {
     if (!connection.source || !connection.target) return false;
-    return validateConnection(map, connection.source, connection.target).ok;
+    return validateEdge(map, connection.source, connection.target).ok;
   };
 
   const onConnect = (connection: Connection) => {
@@ -305,7 +316,7 @@ function FlowCanvasInner({
       targetHandle: connection.targetHandle ?? undefined,
     });
     if (!result.ok) {
-      toast(result.reason ?? "That connection is not valid.");
+      toast(result.reason ?? "That edge is not valid.");
       return;
     }
     toast("Nodes connected.");
@@ -314,7 +325,27 @@ function FlowCanvasInner({
   const hasSavedViewport = map.viewport.x !== 0 || map.viewport.y !== 0 || map.viewport.zoom !== 1;
 
   return (
-    <div ref={wrapperRef} className="relative h-full w-full">
+    <div
+      ref={wrapperRef}
+      className="relative h-full w-full"
+      onKeyDownCapture={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const target = event.target as HTMLElement | null;
+        const nodeElement = target?.closest<HTMLElement>(".react-flow__node");
+        const edgeElement = target?.closest<HTMLElement>(".react-flow__edge");
+        if (nodeElement?.dataset.id) {
+          event.preventDefault();
+          onSelectNode(nodeElement.dataset.id);
+          onSelectEdge(null);
+          return;
+        }
+        if (edgeElement?.dataset.id) {
+          event.preventDefault();
+          onSelectEdge(edgeElement.dataset.id);
+          onSelectNode(null);
+        }
+      }}
+    >
       <ReactFlow<AtlasNode, AtlasEdge>
         nodes={nodes}
         edges={edges}
@@ -354,7 +385,7 @@ function FlowCanvasInner({
         edgesFocusable
         className="bg-paper"
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#DFD9CB" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--color-line)" />
         <Controls
           position="bottom-left"
           showInteractive={false}
@@ -367,7 +398,7 @@ function FlowCanvasInner({
           zoomable
           nodeColor={miniMapColor}
           nodeStrokeWidth={2}
-          maskColor="rgba(244,241,233,0.72)"
+          maskColor="var(--color-paper-mask)"
           className="!bottom-4 !right-4 hidden sm:block"
           ariaLabel="Flow minimap"
         />
@@ -443,7 +474,7 @@ function FlowCanvasInner({
         <Tooltip label="Fit the whole flow in view">
           <button
             type="button"
-            onClick={() => void fitView({ padding: 0.18, duration: 240 })}
+            onClick={() => void fitView({ padding: 0.18, duration: reduceMotion ? 0 : 240 })}
             aria-label="Fit flow in view"
             className="inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
           >

@@ -51,10 +51,11 @@ describe("JSON import and export", () => {
     }
   });
 
-  it("accepts a map wrapped in an export envelope", () => {
+  it("rejects an envelope that the app does not export", () => {
     const map = createSeededWorkspace(TEST_NOW)[0];
     const result = parseMapFile(JSON.stringify({ map, exportedAt: TEST_NOW }));
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("schemaVersion");
   });
 
   it("regenerates identity and appends a suffix on a title collision", () => {

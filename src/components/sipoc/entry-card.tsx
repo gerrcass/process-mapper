@@ -32,9 +32,9 @@ export function EntryCard({
 }) {
   if (readOnly) {
     return (
-      <article className="relative rounded-[10px] border border-line bg-surface py-2 pl-3 pr-2.5 shadow-[0_1px_1px_rgba(25,24,19,0.03)]">
+      <article className="relative rounded-[10px] border border-line bg-surface py-2 pl-3 pr-2.5 shadow-card">
         <span
-          className={cn("absolute bottom-2 left-0 top-2 w-[3px] rounded-r", laneStyle.accentBar)}
+          className={cn("absolute bottom-2 left-0 top-2 w-[6px] rounded-r", laneStyle.accentBar)}
           aria-hidden="true"
         />
         <p className="text-[13.5px] font-medium leading-5 text-ink">{entry.label}</p>
@@ -46,9 +46,9 @@ export function EntryCard({
   }
 
   return (
-    <article className="group relative rounded-[10px] border border-line bg-surface py-1.5 pl-2 pr-1.5 shadow-[0_1px_1px_rgba(25,24,19,0.03)] transition-shadow duration-150 hover:shadow-soft focus-within:shadow-soft">
+    <article className="group relative rounded-[10px] border border-line bg-surface py-1.5 pl-2 pr-1.5 shadow-card transition-shadow duration-150 hover:shadow-soft focus-within:shadow-soft">
       <span
-        className={cn("absolute bottom-2 left-0 top-2 w-[3px] rounded-r", laneStyle.accentBar)}
+        className={cn("absolute bottom-2 left-0 top-2 w-[6px] rounded-r", laneStyle.accentBar)}
         aria-hidden="true"
       />
       <div className="flex items-start gap-0.5">
@@ -67,6 +67,7 @@ export function EntryCard({
             onReject={onRejectLabel}
             ariaLabel={`${laneName} entry ${index + 1} label`}
             placeholder="Label"
+            required
             wrap
             inputClassName="text-[13.5px] font-medium leading-5 text-ink"
           />

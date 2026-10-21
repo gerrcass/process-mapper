@@ -36,12 +36,22 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function createId(prefix: string): string {
-  const random =
-    typeof globalThis.crypto?.randomUUID === "function"
-      ? globalThis.crypto.randomUUID()
-      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-  return `${prefix}-${random}`;
+function nextEntityId(prefix: string, ids: string[]): string {
+  const pattern = new RegExp(`^${prefix}-(\\d+)$`);
+  const highest = ids.reduce((max, id) => {
+    const match = id.match(pattern);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${prefix}-${highest + 1}`;
+}
+
+function allEntryIds(map: ProcessMap): string[] {
+  return [
+    ...map.sipoc.suppliers,
+    ...map.sipoc.inputs,
+    ...map.sipoc.outputs,
+    ...map.sipoc.customers,
+  ].map((entry) => entry.id);
 }
 
 const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
@@ -167,7 +177,7 @@ export function addEntry(
   now: string,
 ): ProcessMap {
   const entry: SipocEntry = {
-    id: createId("entry"),
+    id: nextEntityId("entry", allEntryIds(map)),
     label: requireLabel(input.label),
     detail: optionalText(input.detail),
   };
@@ -285,7 +295,10 @@ export function addNode(map: ProcessMap, input: AddNodeInput, now: string): Proc
   const title = input.title?.trim() || `New ${NODE_KIND_LABELS[input.kind].toLowerCase()}`;
   const isStep = input.kind === "step";
   const node: FlowNode = {
-    id: createId("node"),
+    id: nextEntityId(
+      "node",
+      map.nodes.map((candidate) => candidate.id),
+    ),
     kind: input.kind,
     title,
     description: optionalText(input.description),
@@ -307,7 +320,10 @@ export function addNode(map: ProcessMap, input: AddNodeInput, now: string): Proc
         edges: [
           ...next.edges,
           {
-            id: createId("edge"),
+            id: nextEntityId(
+              "edge",
+              map.edges.map((edge) => edge.id),
+            ),
             source: previous.id,
             target: node.id,
             label: "",
@@ -379,7 +395,10 @@ export function duplicateNode(map: ProcessMap, nodeId: string, now: string): Pro
   }
   const copy: FlowNode = {
     ...source,
-    id: createId("node"),
+    id: nextEntityId(
+      "node",
+      map.nodes.map((node) => node.id),
+    ),
     title: `${source.title} copy`,
     position: { x: source.position.x + 40, y: source.position.y + 40 },
     ...(source.kind === "step" ? { sipocOrder: nextStepOrder(map) } : {}),
@@ -438,16 +457,12 @@ export function reorderSteps(
   );
 }
 
-export interface ConnectionCheck {
+export interface EdgeCheck {
   ok: boolean;
   reason?: string;
 }
 
-export function validateConnection(
-  map: ProcessMap,
-  source: string,
-  target: string,
-): ConnectionCheck {
+export function validateEdge(map: ProcessMap, source: string, target: string): EdgeCheck {
   if (!nodeById(map, source) || !nodeById(map, target)) {
     return { ok: false, reason: "Both nodes must still exist." };
   }
@@ -471,15 +486,18 @@ export interface AddEdgeInput {
 }
 
 export function addEdge(map: ProcessMap, input: AddEdgeInput, now: string): ProcessMap {
-  const check = validateConnection(map, input.source, input.target);
+  const check = validateEdge(map, input.source, input.target);
   if (!check.ok) {
     throw new MapOperationError(
       input.source === input.target ? "self-loop" : "duplicate-edge",
-      check.reason ?? "That connection is not valid.",
+      check.reason ?? "That edge is not valid.",
     );
   }
   const edge: FlowEdge = {
-    id: createId("edge"),
+    id: nextEntityId(
+      "edge",
+      map.edges.map((candidate) => candidate.id),
+    ),
     source: input.source,
     target: input.target,
     label: input.label?.trim() ?? "",
@@ -497,7 +515,7 @@ export function updateEdge(
   now: string,
 ): ProcessMap {
   if (!edgeById(map, edgeId)) {
-    throw new MapOperationError("unknown-edge", "That connection is no longer in this map.");
+    throw new MapOperationError("unknown-edge", "That edge is no longer in this map.");
   }
   return touch(
     {
@@ -518,7 +536,7 @@ export function updateEdge(
 
 export function removeEdge(map: ProcessMap, edgeId: string, now: string): ProcessMap {
   if (!edgeById(map, edgeId)) {
-    throw new MapOperationError("unknown-edge", "That connection is no longer in this map.");
+    throw new MapOperationError("unknown-edge", "That edge is no longer in this map.");
   }
   return touch({ ...map, edges: map.edges.filter((edge) => edge.id !== edgeId) }, now);
 }
@@ -538,19 +556,19 @@ interface CloneOptions {
 
 function cloneWithFreshIds(source: ProcessMap, options: CloneOptions): ProcessMap {
   const nodeIdMap = new Map<string, string>();
-  const nodes = source.nodes.map((node) => {
-    const id = createId("node");
+  const nodes = source.nodes.map((node, index) => {
+    const id = `${options.id}-node-${index + 1}`;
     nodeIdMap.set(node.id, id);
     return { ...node, id, position: { ...node.position } };
   });
-  const edges = source.edges.map((edge) => ({
+  const edges = source.edges.map((edge, index) => ({
     ...edge,
-    id: createId("edge"),
+    id: `${options.id}-edge-${index + 1}`,
     source: nodeIdMap.get(edge.source) ?? edge.source,
     target: nodeIdMap.get(edge.target) ?? edge.target,
   }));
-  const remapLane = (entries: SipocEntry[]) =>
-    entries.map((entry) => ({ ...entry, id: createId("entry") }));
+  const remapLane = (entries: SipocEntry[], lane: string) =>
+    entries.map((entry, index) => ({ ...entry, id: `${options.id}-entry-${lane}-${index + 1}` }));
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -562,10 +580,10 @@ function cloneWithFreshIds(source: ProcessMap, options: CloneOptions): ProcessMa
     createdAt: options.now,
     updatedAt: options.now,
     sipoc: {
-      suppliers: remapLane(source.sipoc.suppliers),
-      inputs: remapLane(source.sipoc.inputs),
-      outputs: remapLane(source.sipoc.outputs),
-      customers: remapLane(source.sipoc.customers),
+      suppliers: remapLane(source.sipoc.suppliers, "suppliers"),
+      inputs: remapLane(source.sipoc.inputs, "inputs"),
+      outputs: remapLane(source.sipoc.outputs, "outputs"),
+      customers: remapLane(source.sipoc.customers, "customers"),
     },
     nodes,
     edges,
@@ -575,10 +593,10 @@ function cloneWithFreshIds(source: ProcessMap, options: CloneOptions): ProcessMa
 
 export function duplicateMap(
   source: ProcessMap,
-  options: { id?: string; now: string; title?: string },
+  options: { id: string; now: string; title?: string },
 ): ProcessMap {
   return cloneWithFreshIds(source, {
-    id: options.id ?? createId("map"),
+    id: options.id,
     now: options.now,
     title: options.title ?? `${source.title} copy`,
     origin: "duplicate",
@@ -587,10 +605,10 @@ export function duplicateMap(
 
 export function createMapFromTemplate(
   template: ProcessMap,
-  options: { id?: string; now: string; title?: string; description?: string },
+  options: { id: string; now: string; title?: string; description?: string },
 ): ProcessMap {
   return cloneWithFreshIds(template, {
-    id: options.id ?? createId("map"),
+    id: options.id,
     now: options.now,
     title: options.title ?? template.title,
     description: options.description,
@@ -612,10 +630,10 @@ export function importedTitle(title: string, existingTitles: string[]): string {
 
 export function importMap(
   source: ProcessMap,
-  options: { existingTitles: string[]; id?: string; now: string },
+  options: { existingTitles: string[]; id: string; now: string },
 ): ProcessMap {
   return cloneWithFreshIds(source, {
-    id: options.id ?? createId("map"),
+    id: options.id,
     now: options.now,
     title: importedTitle(source.title, options.existingTitles),
     origin: "import",

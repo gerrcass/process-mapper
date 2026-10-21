@@ -18,7 +18,7 @@ function KindGlyph({ kind }: { kind: FlowNode["kind"] }) {
 const NODE_HELP: Record<FlowNode["kind"], string> = {
   start: "Where the process begins.",
   step: "A unit of work. Step nodes appear in the SIPOC Process lane.",
-  decision: "A branch point. Label outgoing connections with the outcome.",
+  decision: "A branch point. Label outgoing edges with the outcome.",
   end: "Where the process finishes.",
 };
 
@@ -181,12 +181,12 @@ function EdgeInspector({
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3.5">
         <div>
-          <p className="eyebrow">Connection</p>
+          <p className="eyebrow">Flow edge</p>
           <h2 className="mt-1 flex items-center gap-2 font-display text-[24px] leading-none text-ink">
             <span className={edge.kind === "exception" ? "text-warning" : "text-ink-soft"}>
               <GitBranch className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
-            Flow edge
+            Edge
           </h2>
           <p className="mt-1.5 max-w-[34ch] text-[11px] leading-4 text-muted">
             Label the outcome and mark exception paths so a branch reads clearly.
@@ -225,7 +225,7 @@ function EdgeInspector({
         />
 
         <fieldset>
-          <legend className="mb-1.5 text-[11px] font-medium text-ink-soft">Kind</legend>
+          <legend className="mb-1.5 text-[11px] font-medium text-ink-soft">Edge kind</legend>
           <div className="grid grid-cols-2 gap-2">
             {(["flow", "exception"] as const).map((kind) => (
               <label
@@ -270,12 +270,12 @@ function EdgeInspector({
           onClick={() => {
             deleteEdge(map.id, edge.id);
             onClose();
-            toast("Connection removed.");
+            toast("Edge removed.");
           }}
           className="w-full border-accent/40 bg-accent-soft text-accent-strong hover:border-accent hover:bg-accent/15"
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-          Delete connection
+          Delete edge
         </Button>
       </footer>
     </div>

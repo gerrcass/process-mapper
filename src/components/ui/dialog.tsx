@@ -20,7 +20,7 @@ export const DialogContent = React.forwardRef<
         ref={ref}
         className={cn(
           "fixed left-1/2 top-1/2 z-50 max-h-[90dvh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto",
-          "rounded-panel border border-line bg-paper-raised p-6 shadow-[0_2px_4px_rgba(25,24,19,.05),0_32px_80px_-32px_rgba(25,24,19,.45)]",
+          "rounded-panel border border-line bg-paper-raised p-6 shadow-lift",
           "data-[state=open]:animate-fade-up focus:outline-none sm:p-7",
           size === "sm" && "max-w-[420px]",
           size === "md" && "max-w-[560px]",

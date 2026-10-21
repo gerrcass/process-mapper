@@ -29,7 +29,7 @@ export function AtlasNodeCard({ data, selected, type }: NodeProps<AtlasNode>) {
     return (
       <div
         className={cn(
-          "flow-node-card flex min-w-[168px] items-center gap-2.5 rounded-full border border-ink bg-ink px-4 py-2.5 text-paper shadow-[0_8px_20px_-12px_rgba(25,24,19,.5)]",
+          "flow-node-card flex min-w-[168px] items-center gap-2.5 rounded-full border border-ink bg-ink px-4 py-2.5 text-paper shadow-pill",
           selected && "ring-2 ring-accent ring-offset-2 ring-offset-paper",
         )}
       >
@@ -65,7 +65,7 @@ export function AtlasNodeCard({ data, selected, type }: NodeProps<AtlasNode>) {
   return (
     <div
       className={cn(
-        "flow-node-card relative w-[228px] overflow-hidden rounded-card border border-line bg-surface shadow-[0_1px_2px_rgba(25,24,19,.05),0_12px_28px_-20px_rgba(25,24,19,.35)]",
+        "flow-node-card relative w-[228px] overflow-hidden rounded-card border border-line bg-surface shadow-node",
         selected && "border-ink",
       )}
     >

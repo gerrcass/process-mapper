@@ -57,6 +57,17 @@ describe("process map schema", () => {
     if (!result.ok) expect(result.error).toContain("sipocOrder");
   });
 
+  it("rejects gaps in SIPOC order", () => {
+    const map = structuredClone(createSeededWorkspace(TEST_NOW)[0]);
+    const steps = map.nodes.filter((node) => node.kind === "step");
+    steps[1].sipocOrder = 7;
+
+    const result = parseProcessMap(map);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("contiguously");
+  });
+
   it("accepts a persisted workspace envelope and rejects an unknown version", () => {
     const maps = createSeededWorkspace(TEST_NOW);
     const payload = { state: { maps }, version: 1 };

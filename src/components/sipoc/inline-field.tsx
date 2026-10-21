@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/cn";
+import { useCommitField } from "@/lib/use-commit-field";
 
 export function InlineField({
   value,
@@ -11,6 +12,7 @@ export function InlineField({
   placeholder,
   multiline = false,
   wrap = false,
+  required = false,
   className,
   inputClassName,
   rows = 2,
@@ -22,32 +24,18 @@ export function InlineField({
   placeholder?: string;
   multiline?: boolean;
   wrap?: boolean;
+  required?: boolean;
   className?: string;
   inputClassName?: string;
   rows?: number;
 }) {
-  const [draft, setDraft] = React.useState(value);
-  const [editing, setEditing] = React.useState(false);
-  const cancelRef = React.useRef(false);
-
-  const commit = () => {
-    if (cancelRef.current) {
-      cancelRef.current = false;
-      return;
-    }
-    setEditing(false);
-    const next = draft.trim();
-    if (next === value) {
-      setDraft(value);
-      return;
-    }
-    if (!next) {
-      setDraft(value);
-      onReject?.();
-      return;
-    }
-    onCommit(next);
-  };
+  const field = useCommitField({
+    value,
+    onCommit,
+    onReject,
+    required,
+    label: ariaLabel,
+  });
 
   const fieldClassName = cn(
     "w-full rounded-[5px] border border-transparent bg-transparent px-1 py-0.5 text-inherit",
@@ -58,38 +46,15 @@ export function InlineField({
 
   const shared = {
     "aria-label": ariaLabel,
-    value: editing ? draft : value,
+    value: field.displayValue,
     placeholder,
-    onFocus: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setEditing(true);
-      setDraft(event.currentTarget.value);
-    },
+    onFocus: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      field.begin(event.currentTarget.value),
     onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setDraft(event.target.value),
-    onBlur: commit,
-    onKeyDown: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        cancelRef.current = true;
-        setDraft(value);
-        setEditing(false);
-        event.currentTarget.blur();
-      }
-      if (event.key === "Enter" && !multiline) {
-        if (!draft.trim()) {
-          event.preventDefault();
-          onReject?.();
-          return;
-        }
-        event.preventDefault();
-        event.currentTarget.blur();
-      }
-      if (event.key === "Enter" && multiline && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        event.currentTarget.blur();
-      }
-    },
-    className: fieldClassName,
+      field.change(event.target.value),
+    onBlur: field.commit,
+    onKeyDown: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      field.keyDown(event, multiline),
   };
 
   return (

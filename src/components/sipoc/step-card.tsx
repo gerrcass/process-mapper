@@ -43,9 +43,9 @@ export function StepCard({
 
   if (readOnly) {
     return (
-      <article className="relative rounded-[10px] border border-process-line bg-surface py-2.5 pl-3 pr-3 shadow-[0_1px_1px_rgba(25,24,19,0.03)]">
+      <article className="relative rounded-[10px] border border-process-line bg-surface py-2.5 pl-3 pr-3 shadow-card">
         <span
-          className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r bg-accent"
+          className="absolute bottom-2 left-0 top-2 w-[6px] rounded-r bg-accent"
           aria-hidden="true"
         />
         <div className="flex items-baseline gap-2">
@@ -65,9 +65,9 @@ export function StepCard({
   }
 
   return (
-    <article className="group relative rounded-[10px] border border-process-line bg-surface py-2 pl-2 pr-1.5 shadow-[0_1px_1px_rgba(25,24,19,0.03)] transition-shadow duration-150 hover:shadow-soft focus-within:shadow-soft">
+    <article className="group relative rounded-[10px] border border-process-line bg-surface py-2 pl-2 pr-1.5 shadow-card transition-shadow duration-150 hover:shadow-soft focus-within:shadow-soft">
       <span
-        className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r bg-accent"
+        className="absolute bottom-2 left-0 top-2 w-[6px] rounded-r bg-accent"
         aria-hidden="true"
       />
       <div className="flex items-start gap-0.5">
@@ -90,6 +90,7 @@ export function StepCard({
               onCommit={(value) => onCommit("title", value)}
               onReject={onRejectTitle}
               ariaLabel={`Step ${index + 1} title`}
+              required
               wrap
               inputClassName="text-[13.5px] font-medium leading-5 text-ink"
             />

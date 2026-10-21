@@ -128,6 +128,15 @@ export const processMapSchema = z
       orders.add(node.sipocOrder);
     });
 
+    const sortedOrders = [...orders].sort((a, b) => a - b);
+    if (sortedOrders.some((order, index) => order !== index + 1)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["nodes"],
+        message: "step SIPOC order must run contiguously from 1",
+      });
+    }
+
     const edgeIds = new Set<string>();
     map.edges.forEach((edge, index) => {
       if (edgeIds.has(edge.id)) {

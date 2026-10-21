@@ -12,6 +12,7 @@ export function useUndoRedoShortcuts(enabled = true) {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('[role="dialog"][data-state="open"]')) return;
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") return;
       event.preventDefault();
       if (event.shiftKey) redo();

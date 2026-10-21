@@ -6,7 +6,6 @@ import {
   addNode,
   createBlankMap,
   createMapFromTemplate,
-  createId,
   duplicateMap,
   duplicateNode,
   importMap,
@@ -17,11 +16,12 @@ import {
   removeNode,
   reorderEntries,
   reorderSteps,
+  setViewport as applyViewport,
   updateEdge,
   updateEntry,
   updateMapDetails,
   updateNode,
-  validateConnection,
+  validateEdge,
   type AddEdgeInput,
   type AddNodeInput,
   type FlowNodePatch,
@@ -31,6 +31,7 @@ import { tidyFlow as tidyFlowLayout } from "@/domain/layout";
 import { migratePersistedWorkspace } from "@/domain/schema";
 import { createSeededWorkspace, templateById } from "@/domain/templates";
 import { SCHEMA_VERSION } from "@/domain/types";
+import { createId } from "@/lib/ids";
 import type { EntryLane, FlowPosition, MapStatus, ProcessMap, Viewport } from "@/domain/types";
 
 const STORAGE_NAME = "process-atlas.workspace";
@@ -251,7 +252,7 @@ export const useWorkspace = create<WorkspaceState>()(
           const state = get();
           const source = state.maps.find((map) => map.id === mapId);
           if (!source) return null;
-          const copy = duplicateMap(source, { now: nowIso() });
+          const copy = duplicateMap(source, { id: createId("map"), now: nowIso() });
           set({
             maps: [copy, ...state.maps],
             past: [...state.past, state.maps].slice(-HISTORY_LIMIT),
@@ -284,6 +285,7 @@ export const useWorkspace = create<WorkspaceState>()(
           const state = get();
           const imported = importMap(document, {
             existingTitles: state.maps.map((map) => map.title),
+            id: createId("map"),
             now: nowIso(),
           });
           set({
@@ -378,7 +380,7 @@ export const useWorkspace = create<WorkspaceState>()(
         connectNodes: (mapId, input) => {
           const map = get().maps.find((candidate) => candidate.id === mapId);
           if (!map) return { ok: false, reason: "That map is no longer in the workspace." };
-          const check = validateConnection(map, input.source, input.target);
+          const check = validateEdge(map, input.source, input.target);
           if (!check.ok) return check;
           applyMap(mapId, (current) => addEdge(current, input, nowIso()));
           return { ok: true };
@@ -397,14 +399,7 @@ export const useWorkspace = create<WorkspaceState>()(
         },
 
         setViewport: (mapId, viewport) => {
-          applyMap(
-            mapId,
-            (map) => ({
-              ...map,
-              viewport,
-            }),
-            { record: false },
-          );
+          applyMap(mapId, (map) => applyViewport(map, viewport), { record: false });
         },
 
         undo: () => {

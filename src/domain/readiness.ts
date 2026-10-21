@@ -3,6 +3,7 @@ import type { ProcessMap } from "./types";
 
 export type ReadinessGroup = "frame" | "process" | "flow";
 export type ReadinessView = "sipoc" | "flow";
+export type ReadinessFocus = "suppliers" | "inputs" | "process" | "outputs" | "customers" | "flow";
 
 export interface ReadinessCheck {
   id:
@@ -21,6 +22,7 @@ export interface ReadinessCheck {
   passed: boolean;
   weight: number;
   view: ReadinessView;
+  focus: ReadinessFocus;
   action: string;
 }
 
@@ -62,6 +64,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: map.description.trim().length >= 20,
       weight: 10,
       view: "sipoc",
+      focus: "process",
       action: "Edit map details",
     },
     {
@@ -72,6 +75,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: map.sipoc.suppliers.length >= 2,
       weight: 10,
       view: "sipoc",
+      focus: "suppliers",
       action: "Open Suppliers",
     },
     {
@@ -82,6 +86,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: map.sipoc.inputs.length >= 2,
       weight: 10,
       view: "sipoc",
+      focus: "inputs",
       action: "Open Inputs",
     },
     {
@@ -92,6 +97,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: steps.length >= 3,
       weight: 15,
       view: "sipoc",
+      focus: "process",
       action: "Open Process",
     },
     {
@@ -102,6 +108,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: steps.length > 0 && steps.every((step) => step.owner.trim().length > 0),
       weight: 15,
       view: "sipoc",
+      focus: "process",
       action: "Open Process",
     },
     {
@@ -112,6 +119,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: map.sipoc.outputs.length >= 2,
       weight: 10,
       view: "sipoc",
+      focus: "outputs",
       action: "Open Outputs",
     },
     {
@@ -122,6 +130,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
       passed: map.sipoc.customers.length >= 1,
       weight: 10,
       view: "sipoc",
+      focus: "customers",
       action: "Open Customers",
     },
     {
@@ -134,6 +143,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
         (steps.length === 1 || steps.every((step) => connectedStepIds.has(step.id))),
       weight: 10,
       view: "flow",
+      focus: "flow",
       action: "Open flow",
     },
     {
@@ -146,6 +156,7 @@ export function evaluateReadiness(map: ProcessMap): Readiness {
         map.nodes.some((node) => node.kind === "end"),
       weight: 10,
       view: "flow",
+      focus: "flow",
       action: "Open flow",
     },
   ];

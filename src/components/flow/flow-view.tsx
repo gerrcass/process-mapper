@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
+import { Dialog as RadixDialog } from "radix-ui";
 import { NODE_KIND_LABELS, type ProcessMap } from "@/domain/types";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { Inspector } from "./inspector";
@@ -12,7 +13,7 @@ function FlowLoading() {
       <div
         className="absolute inset-0 opacity-70"
         style={{
-          backgroundImage: "radial-gradient(rgba(25,24,19,0.08) 0.6px, transparent 0.6px)",
+          backgroundImage: "radial-gradient(var(--color-line) 0.6px, transparent 0.6px)",
           backgroundSize: "20px 20px",
         }}
         aria-hidden="true"
@@ -45,7 +46,6 @@ export function FlowView({
     focusNodeId && map.nodes.some((node) => node.id === focusNodeId) ? focusNodeId : null,
   );
   const [selectedEdgeId, setSelectedEdgeId] = React.useState<string | null>(null);
-  const sheetRef = React.useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery("(min-width: 1100px)");
 
   const selectNode = React.useCallback((id: string | null) => {
@@ -68,14 +68,8 @@ export function FlowView({
   const selectionLabel = selectedNode
     ? `${NODE_KIND_LABELS[selectedNode.kind]}: ${selectedNode.title}`
     : selectedEdge
-      ? `Connection${selectedEdge.label ? `: ${selectedEdge.label}` : ""}`
+      ? `Flow edge${selectedEdge.label ? `: ${selectedEdge.label}` : ""}`
       : "";
-
-  React.useEffect(() => {
-    if (selectionLabel && !isDesktop) {
-      sheetRef.current?.focus({ preventScroll: true });
-    }
-  }, [isDesktop, selectionLabel]);
 
   const inspector = (
     <Inspector
@@ -115,29 +109,26 @@ export function FlowView({
       ) : null}
 
       {selectionLabel && !isDesktop ? (
-        <div>
-          <button
-            type="button"
-            aria-label="Dismiss inspector"
-            onClick={clearSelection}
-            className="fixed inset-0 z-30 bg-ink/20"
-          />
-          <div
-            ref={sheetRef}
-            role="region"
-            aria-label="Flow inspector"
-            tabIndex={-1}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.stopPropagation();
-                clearSelection();
-              }
-            }}
-            className="fixed inset-y-0 right-0 z-40 flex w-[min(92vw,360px)] flex-col border-l border-line bg-paper-raised shadow-[-20px_0_50px_-30px_rgba(25,24,19,.45)] focus:outline-none"
-          >
-            {inspector}
-          </div>
-        </div>
+        <RadixDialog.Root
+          open
+          onOpenChange={(open) => {
+            if (!open) clearSelection();
+          }}
+        >
+          <RadixDialog.Portal>
+            <RadixDialog.Overlay className="fixed inset-0 z-30 bg-ink/25" />
+            <RadixDialog.Content
+              aria-label="Flow inspector"
+              className="fixed inset-y-0 right-0 z-40 flex w-[min(92vw,360px)] flex-col border-l border-line bg-paper-raised shadow-lift focus:outline-none"
+            >
+              <RadixDialog.Title className="sr-only">Flow inspector</RadixDialog.Title>
+              <RadixDialog.Description className="sr-only">
+                Edit the selected node or edge, or close the inspector to return to the canvas.
+              </RadixDialog.Description>
+              {inspector}
+            </RadixDialog.Content>
+          </RadixDialog.Portal>
+        </RadixDialog.Root>
       ) : null}
     </div>
   );

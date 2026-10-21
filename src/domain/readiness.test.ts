@@ -39,6 +39,31 @@ describe("readiness", () => {
     expect(readiness.checks.find((check) => check.id === "outputs")?.passed).toBe(false);
   });
 
+  it.each([
+    ["suppliers", "suppliers"],
+    ["inputs", "inputs"],
+    ["customers", "customers"],
+  ] as const)("flips the %s check below its threshold", (checkId, lane) => {
+    const map = seededSupport();
+    map.sipoc[lane] = map.sipoc[lane].slice(0, lane === "customers" ? 0 : 1);
+
+    const readiness = evaluateReadiness(map);
+
+    expect(readiness.checks.find((check) => check.id === checkId)?.passed).toBe(false);
+    if (lane === "customers") expect(readiness.score).toBe(90);
+  });
+
+  it("fails the step count below three steps", () => {
+    let map = makeMap();
+    map = addNode(map, { kind: "step", title: "One", owner: "Owner" }, TEST_NOW);
+    map = addNode(map, { kind: "step", title: "Two", owner: "Owner" }, TEST_NOW);
+
+    const readiness = evaluateReadiness(map);
+
+    expect(readiness.checks.find((check) => check.id === "steps")?.passed).toBe(false);
+    expect(readiness.checks.find((check) => check.id === "owners")?.passed).toBe(true);
+  });
+
   it("fails connectivity when a step has no incident edge", () => {
     const map = seededSupport();
     const step = processSteps(map)[1];
