@@ -2,7 +2,7 @@
 
 import { LANE_ORDER, type ProcessMap, type SipocLane } from "@/domain/types";
 import { mapStats, processSteps } from "@/domain/operations";
-import { formatLongDate, formatRelativeTime } from "@/lib/time";
+import { formatLongDate } from "@/lib/time";
 import { cn } from "@/lib/cn";
 import { Lane } from "./lane";
 
@@ -46,8 +46,8 @@ export function SipocBoard({
           </span>
           <span className="font-medium text-ink-soft">{stats.steps}</span> process steps
         </p>
-        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-          Updated {formatRelativeTime(map.updatedAt)}
+        <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted min-[1180px]:hidden">
+          Scroll sideways for all five lanes
         </p>
       </div>
 

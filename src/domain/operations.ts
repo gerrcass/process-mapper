@@ -1,6 +1,4 @@
 import {
-  ENTRY_LANES,
-  LANE_ORDER,
   NODE_KIND_LABELS,
   SCHEMA_VERSION,
   type EdgeKind,
@@ -22,8 +20,7 @@ export type MapOperationErrorCode =
   | "unknown-edge"
   | "self-loop"
   | "duplicate-edge"
-  | "invalid-order"
-  | "empty-step";
+  | "invalid-order";
 
 export class MapOperationError extends Error {
   constructor(
@@ -405,9 +402,6 @@ export function removeNode(map: ProcessMap, nodeId: string, now: string): Proces
   if (!node) {
     throw new MapOperationError("unknown-node", "That node is no longer in this map.");
   }
-  if (node.kind === "step" && processSteps(map).length === 1) {
-    // Allowed: an empty flow is a valid starting point.
-  }
   return touch(
     {
       ...map,
@@ -628,10 +622,3 @@ export function importMap(
     status: "draft",
   });
 }
-
-export function createDemoWorkspaceCopy(maps: ProcessMap[], now: string): ProcessMap[] {
-  return maps.map((map) => ({ ...map, updatedAt: now }));
-}
-
-export const ENTRY_LANE_ORDER = ENTRY_LANES;
-export const SIPOC_LANE_ORDER = LANE_ORDER;

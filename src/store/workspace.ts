@@ -28,8 +28,8 @@ import {
   type MapDetailsPatch,
 } from "@/domain/operations";
 import { tidyFlow as tidyFlowLayout } from "@/domain/layout";
-import { parsePersistedWorkspace, migratePersistedWorkspace } from "@/domain/schema";
-import { createSeededWorkspace, templateById, type MapTemplate } from "@/domain/templates";
+import { migratePersistedWorkspace } from "@/domain/schema";
+import { createSeededWorkspace, templateById } from "@/domain/templates";
 import { SCHEMA_VERSION } from "@/domain/types";
 import type { EntryLane, FlowPosition, MapStatus, ProcessMap, Viewport } from "@/domain/types";
 
@@ -454,11 +454,3 @@ reportStorageError = (message) => {
 };
 
 export { STORAGE_NAME };
-
-export function findTemplate(id: string): MapTemplate | undefined {
-  return templateById(id);
-}
-
-export function isPersistedPayloadValid(raw: unknown): boolean {
-  return parsePersistedWorkspace(raw).ok;
-}

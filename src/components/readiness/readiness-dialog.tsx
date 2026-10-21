@@ -61,7 +61,7 @@ export function ReadinessDialog({
           </div>
         </div>
 
-        <div className="max-h-[46vh] overflow-y-auto">
+        <div className="max-h-[54dvh] overflow-y-auto">
           {GROUPS.map((group) => {
             const checks = readiness.checks.filter((check) => check.group === group);
             const passed = checks.filter((check) => check.passed).length;
@@ -106,7 +106,11 @@ export function ReadinessDialog({
                             {check.passed ? ": passed" : ": needs work"}
                           </span>
                         </p>
-                        <p className="mt-0.5 text-[10.5px] leading-4 text-muted">{check.detail}</p>
+                        {!check.passed ? (
+                          <p className="mt-0.5 text-[10.5px] leading-4 text-muted">
+                            {check.detail}
+                          </p>
+                        ) : null}
                         {!check.passed ? (
                           <button
                             type="button"

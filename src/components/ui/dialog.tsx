@@ -75,7 +75,3 @@ export function DialogActions({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-export function DialogSectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="eyebrow mb-2.5">{children}</div>;
-}

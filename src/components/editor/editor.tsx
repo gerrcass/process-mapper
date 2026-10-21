@@ -86,7 +86,13 @@ export function Editor({ mapId }: { mapId: string }) {
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [reviewOpen, setReviewOpen] = React.useState(false);
+  const saveAnnouncement = React.useRef<HTMLParagraphElement>(null);
   useUndoRedoShortcuts();
+
+  React.useEffect(() => {
+    if (!saveAnnouncement.current) return;
+    saveAnnouncement.current.textContent = "Saved locally.";
+  }, [map?.updatedAt]);
 
   const view = searchParams.get("view") === "flow" ? "flow" : "sipoc";
 
@@ -135,6 +141,7 @@ export function Editor({ mapId }: { mapId: string }) {
 
   return (
     <div className="editor-root flex h-dvh flex-col overflow-hidden bg-paper">
+      <p ref={saveAnnouncement} className="sr-only" role="status" aria-live="polite" />
       <header className="editor-header z-30 shrink-0 border-b border-line bg-paper">
         <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-2 px-3 sm:gap-3 sm:px-5">
           <Tooltip label="Back to workspace">

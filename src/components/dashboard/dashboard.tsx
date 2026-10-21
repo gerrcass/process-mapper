@@ -182,7 +182,7 @@ export function Dashboard() {
             maps.
           </p>
           <Button className="mt-5" onClick={() => setQuery("")}>
-            Clear search
+            Show all maps
           </Button>
         </div>
       ) : (

@@ -2,10 +2,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { Trash2, X } from "lucide-react";
-import { toast } from "sonner";
 import { NODE_KIND_LABELS, type ProcessMap } from "@/domain/types";
-import { useWorkspace } from "@/store/workspace";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { Inspector } from "./inspector";
 
@@ -48,8 +45,6 @@ export function FlowView({
     focusNodeId && map.nodes.some((node) => node.id === focusNodeId) ? focusNodeId : null,
   );
   const [selectedEdgeId, setSelectedEdgeId] = React.useState<string | null>(null);
-  const deleteNode = useWorkspace((state) => state.deleteNode);
-  const deleteEdge = useWorkspace((state) => state.deleteEdge);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery("(min-width: 1100px)");
 
@@ -82,24 +77,6 @@ export function FlowView({
     }
   }, [isDesktop, selectionLabel]);
 
-  const deleteSelection = () => {
-    if (selectedNodeId) {
-      deleteNode(map.id, selectedNodeId);
-      setSelectedNodeId(null);
-      toast(
-        selectedNode?.kind === "step"
-          ? "Step removed from the flow and SIPOC."
-          : "Node removed from the flow.",
-      );
-      return;
-    }
-    if (selectedEdgeId) {
-      deleteEdge(map.id, selectedEdgeId);
-      setSelectedEdgeId(null);
-      toast("Connection removed.");
-    }
-  };
-
   const inspector = (
     <Inspector
       map={map}
@@ -126,34 +103,6 @@ export function FlowView({
         <p className="sr-only" role="status" aria-live="polite">
           {selectionLabel ? `${selectionLabel} selected.` : ""}
         </p>
-
-        {selectionLabel && isDesktop ? (
-          <div
-            role="toolbar"
-            aria-label="Selection actions"
-            className="absolute bottom-4 left-1/2 z-20 flex max-w-[calc(100%-120px)] -translate-x-1/2 items-center gap-1 rounded-full border border-ink bg-ink p-1 pl-3 text-paper shadow-[0_12px_30px_-18px_rgba(25,24,19,.7)]"
-          >
-            <span className="max-w-[220px] truncate text-[11.5px] font-medium">
-              {selectionLabel}
-            </span>
-            <button
-              type="button"
-              onClick={deleteSelection}
-              className="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11.5px] font-medium text-paper/90 transition-colors hover:bg-paper/15 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              <Trash2 className="h-3 w-3" aria-hidden="true" />
-              Delete
-            </button>
-            <button
-              type="button"
-              onClick={clearSelection}
-              aria-label="Clear selection"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-paper/70 transition-colors hover:bg-paper/15 hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              <X className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        ) : null}
       </div>
 
       {selectionLabel && isDesktop ? (
@@ -169,7 +118,7 @@ export function FlowView({
         <div>
           <button
             type="button"
-            aria-label="Close inspector"
+            aria-label="Dismiss inspector"
             onClick={clearSelection}
             className="fixed inset-0 z-30 bg-ink/20"
           />

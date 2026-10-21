@@ -1,0 +1,192 @@
+import { expect, test, type Page } from "@playwright/test";
+
+const SUPPORT_MAP = "Customer support escalation";
+let consoleErrors: string[] = [];
+
+async function resetWorkspace(page: Page) {
+  await page.goto("/");
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /Frame the process/ })).toBeVisible();
+}
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => consoleErrors.push(error.message));
+  await resetWorkspace(page);
+});
+
+test.afterEach(() => {
+  expect(consoleErrors).toEqual([]);
+});
+
+test("primary journey keeps SIPOC and flow in sync across a reload", async ({ page }) => {
+  await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
+  await expect(page).toHaveURL(/\/maps\/map-support-escalation$/);
+  await expect(page.getByRole("heading", { name: "Suppliers" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Add supplier" }).click();
+  await page.getByLabel("New supplier label").fill("Procurement desk");
+  await page.getByLabel("New supplier detail").fill("Owns vendor checks");
+  await page.getByRole("button", { name: "Add supplier" }).click();
+  await expect(page.getByRole("textbox", { name: "Suppliers entry 5 label" })).toHaveValue(
+    "Procurement desk",
+  );
+
+  await page
+    .getByRole("navigation", { name: "Map views" })
+    .getByRole("link", { name: "Flow" })
+    .click();
+  await expect(page.getByRole("toolbar", { name: "Flow tools" })).toBeVisible();
+  await page.getByRole("button", { name: "Add step node" }).click();
+
+  const title = page.getByRole("textbox", { name: "Title", exact: true });
+  await expect(title).toHaveValue("New step");
+  await title.fill("Verify the fix");
+  await title.press("Enter");
+
+  const owner = page.getByRole("textbox", { name: "Owner" });
+  await owner.fill("Support engineer");
+  await owner.press("Enter");
+
+  const system = page.getByRole("textbox", { name: "System" });
+  await system.fill("Jira");
+  await system.press("Enter");
+
+  await expect(
+    page.locator(".react-flow__node").filter({ hasText: "Verify the fix" }),
+  ).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("toolbar", { name: "Flow tools" })).toBeVisible();
+  await expect(
+    page.locator(".react-flow__node").filter({ hasText: "Verify the fix" }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("navigation", { name: "Map views" })
+    .getByRole("link", { name: "SIPOC" })
+    .click();
+  const process = page.getByRole("region", { name: "Process" });
+  await expect(page.getByRole("textbox", { name: "Step 5 title" })).toHaveValue("Verify the fix");
+  await expect(process.getByText("Support engineer")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Suppliers entry 5 label" })).toHaveValue(
+    "Procurement desk",
+  );
+});
+
+test("lifecycle journey creates from a template, searches, deletes, and imports JSON", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "New map" }).click();
+  await page.locator("label").filter({ hasText: "New hire onboarding" }).click();
+  const title = page.getByLabel("Title");
+  await title.fill("Onboarding v2");
+  await page.getByRole("button", { name: "Create map" }).click();
+
+  await expect(page).toHaveURL(/\/maps\/map-/);
+  await expect(page.getByRole("textbox", { name: "Map title" })).toHaveValue("Onboarding v2");
+
+  await page.getByRole("link", { name: "Back to workspace" }).click();
+  await page.getByRole("searchbox", { name: "Search maps" }).fill("Onboarding v2");
+  await expect(page.getByRole("link", { name: "Open Onboarding v2" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Actions for Onboarding v2" }).click();
+  await page.getByRole("menuitem", { name: "Delete map" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete map" }).click();
+  await expect(page.getByRole("link", { name: "Open Onboarding v2" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Show all maps" }).click();
+  await expect(page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true })).toBeVisible();
+
+  const invalidChooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Import a map from a JSON file" }).click();
+  const invalidChooser = await invalidChooserPromise;
+  await invalidChooser.setFiles({
+    name: "broken.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"title":"broken"}'),
+  });
+  await expect(page.getByText(/Could not import this file/)).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open Customer support escalation (imported)" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
+  await page.getByRole("button", { name: "Export or import map data" }).click();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("menuitem", { name: "Map JSON" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("customer-support-escalation.process-atlas.json");
+  const downloadPath = test.info().outputPath("support-map.json");
+  await download.saveAs(downloadPath);
+
+  await page.getByRole("link", { name: "Back to workspace" }).click();
+  await expect(page.getByRole("searchbox", { name: "Search maps" })).toBeVisible();
+  const importChooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Import a map from a JSON file" }).click();
+  const importChooser = await importChooserPromise;
+  await importChooser.setFiles(downloadPath);
+  await expect(
+    page.getByRole("link", { name: "Open Customer support escalation (imported)" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true })).toBeVisible();
+});
+
+test("resilience states cover corrupt storage, a missing map, and an empty flow", async ({
+  browser,
+  page,
+}) => {
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    window.localStorage.setItem(
+      "process-atlas.workspace",
+      JSON.stringify({ state: { maps: [{ broken: true }] }, version: 1 }),
+    );
+  });
+  const corruptPage = await context.newPage();
+  await corruptPage.goto("/");
+  await expect(corruptPage.getByText(/Saved workspace could not be read/)).toBeVisible();
+  await expect(corruptPage.getByRole("link", { name: `Open ${SUPPORT_MAP}` })).toBeVisible();
+  await context.close();
+
+  await page.goto("/maps/does-not-exist");
+  await expect(
+    page.getByRole("heading", { name: "This map is not in this workspace." }),
+  ).toBeVisible();
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "New map" }).click();
+  await page.getByLabel("Title").fill("Empty process");
+  await page.getByRole("button", { name: "Create map" }).click();
+  await page
+    .getByRole("navigation", { name: "Map views" })
+    .getByRole("link", { name: "Flow" })
+    .click();
+  await expect(page.getByRole("heading", { name: "Start with the first step." })).toBeVisible();
+  await page.getByRole("button", { name: "Add first step" }).click();
+  await expect(page.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("New step");
+});
+
+test("the dashboard and editor remain usable at phone width", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Frame the process/ })).toBeVisible();
+  const horizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
+  await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
+  await expect(page.getByRole("region", { name: "Suppliers" })).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Map views" })
+    .getByRole("link", { name: "Flow" })
+    .click();
+  await page.getByRole("button", { name: "Add step node" }).click();
+  await expect(page.getByRole("region", { name: "Flow inspector" })).toBeVisible();
+  await page.getByRole("button", { name: "Close inspector" }).click();
+  await expect(page.getByRole("region", { name: "Flow inspector" })).toHaveCount(0);
+});

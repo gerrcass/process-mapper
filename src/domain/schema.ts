@@ -1,13 +1,11 @@
 import { z } from "zod";
 import {
   EDGE_KINDS,
-  ENTRY_LANES,
   FLOW_NODE_KINDS,
   MAP_ORIGINS,
   MAP_STATUSES,
   SCHEMA_VERSION,
   type ProcessMap,
-  type SipocEntry,
 } from "./types";
 
 const isoDate = z.string().datetime({ offset: true });
@@ -232,10 +230,3 @@ export function migratePersistedWorkspace(
   }
   return parsePersistedWorkspace(raw);
 }
-
-export function entryFromUnknown(raw: unknown): SipocEntry | null {
-  const result = sipocEntrySchema.safeParse(raw);
-  return result.success ? result.data : null;
-}
-
-export const laneSchema = z.enum(ENTRY_LANES);

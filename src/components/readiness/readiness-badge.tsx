@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import type { ReadinessLevel } from "@/domain/readiness";
 
-export function readinessColor(score: number): string {
+function readinessColor(score: number): string {
   if (score === 100) return "#3E6B4F";
   if (score >= 70) return "#A97419";
   return "#D14A24";

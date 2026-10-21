@@ -51,7 +51,7 @@ describe("dashboard search", () => {
     await user.type(screen.getByRole("searchbox", { name: "Search maps" }), "payroll zebra");
 
     expect(screen.getByRole("heading", { name: /No maps match/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Clear search" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show all maps" })).toBeInTheDocument();
   });
 
   it("duplicates a map from the card menu and keeps it in the workspace", async () => {

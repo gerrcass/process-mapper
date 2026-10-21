@@ -96,20 +96,18 @@ function NodeInspector({
 
         {node.kind === "step" ? (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              <InspectorField
-                label="Owner"
-                value={node.owner}
-                onCommit={(owner) => update({ owner })}
-                placeholder="Accountable person"
-              />
-              <InspectorField
-                label="System"
-                value={node.system}
-                onCommit={(system) => update({ system })}
-                placeholder="Tool of record"
-              />
-            </div>
+            <InspectorField
+              label="Owner"
+              value={node.owner}
+              onCommit={(owner) => update({ owner })}
+              placeholder="Accountable person"
+            />
+            <InspectorField
+              label="System"
+              value={node.system}
+              onCommit={(system) => update({ system })}
+              placeholder="Tool of record"
+            />
             <InspectorField
               label="Duration"
               value={node.duration}

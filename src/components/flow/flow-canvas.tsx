@@ -22,12 +22,29 @@ import {
   type EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { GitBranch, Maximize2, Play, Plus, Square, Wand2, Workflow } from "lucide-react";
+import {
+  ChevronDown,
+  GitBranch,
+  ListTree,
+  Maximize2,
+  Play,
+  Plus,
+  Square,
+  Wand2,
+  Workflow,
+} from "lucide-react";
 import { toast } from "sonner";
-import type { FlowNodeKind, ProcessMap } from "@/domain/types";
+import { NODE_KIND_LABELS, type FlowNodeKind, type ProcessMap } from "@/domain/types";
 import { processSteps, validateConnection } from "@/domain/operations";
 import { useWorkspace } from "@/store/workspace";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tooltip } from "@/components/ui/tooltip";
 import {
   FLOW_PNG_EXPORT_EVENT,
@@ -228,6 +245,12 @@ function FlowCanvasInner({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [deleteEdge, deleteNode, map.id, onSelectEdge, onSelectNode, selectedEdgeId, selectedNodeId]);
 
+  const selectNodeAndReveal = (nodeId: string) => {
+    onSelectNode(nodeId);
+    onSelectEdge(null);
+    revealNode(nodeId);
+  };
+
   const revealNode = (nodeId: string) => {
     const node = useWorkspace
       .getState()
@@ -315,15 +338,6 @@ function FlowCanvasInner({
           onSelectNode(null);
           onSelectEdge(null);
         }}
-        onSelectionChange={({ nodes: selectedNodes, edges: selectedEdges }) => {
-          if (selectedNodes.length > 0) {
-            onSelectNode(selectedNodes[0].id);
-            onSelectEdge(null);
-          } else if (selectedEdges.length > 0) {
-            onSelectEdge(selectedEdges[0].id);
-            onSelectNode(null);
-          }
-        }}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onNodeDragStart={() => beginNodeDrag()}
@@ -331,7 +345,7 @@ function FlowCanvasInner({
         onMoveEnd={(_, viewport) => setViewport(map.id, viewport)}
         defaultViewport={map.viewport}
         fitView={!hasSavedViewport && map.nodes.length > 0}
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.2, minZoom: 0.55, maxZoom: 0.95 }}
         minZoom={0.2}
         maxZoom={2}
         deleteKeyCode={null}
@@ -387,6 +401,34 @@ function FlowCanvasInner({
           icon={<Square className="h-3.5 w-3.5" aria-hidden="true" />}
           onClick={() => add("end")}
         />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Select a flow node"
+              className="inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-[11.5px] font-medium text-ink-soft transition-colors hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+            >
+              <ListTree className="h-3.5 w-3.5" aria-hidden="true" />
+              Nodes
+              <ChevronDown className="h-3 w-3" aria-hidden="true" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-[280px] overflow-y-auto">
+            <DropdownMenuLabel>Flow nodes</DropdownMenuLabel>
+            {map.nodes.length === 0 ? (
+              <DropdownMenuItem disabled>No nodes yet</DropdownMenuItem>
+            ) : (
+              map.nodes.map((node) => (
+                <DropdownMenuItem key={node.id} onSelect={() => selectNodeAndReveal(node.id)}>
+                  <span className="w-[58px] shrink-0 font-mono text-[9px] uppercase tracking-[0.06em] text-muted">
+                    {NODE_KIND_LABELS[node.kind]}
+                  </span>
+                  <span className="truncate">{node.title}</span>
+                </DropdownMenuItem>
+              ))
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <span className="mx-1 h-5 w-px bg-line" aria-hidden="true" />
         <Tooltip label="Arrange the canvas by dependency">
           <button
