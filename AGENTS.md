@@ -1,17 +1,33 @@
 # Process Atlas
 
-A local-first SIPOC and process-mapping workspace. Next.js App Router, TypeScript, Tailwind CSS, and React Flow.
+Local-first SIPOC and process-mapping demo. Next.js App Router, TypeScript, Tailwind CSS v4, React Flow, Zustand.
 
-## Agent skills
+## Start here
 
-### Issue tracker
+- **Spec:** GitHub issue #1. **Tickets:** #2–#10. Read with `gh issue view <n>`; the blocker graph is native.
+- **Domain language:** `GLOSSARY.md`. Use its terms in code, tests, copy, and commits.
+- **Decisions:** `docs/adr/`. Read the two ADRs before changing persistence or the two-view model.
+- **Visual direction:** `docs/design/brief.md`. Use its tokens and patterns instead of inventing a local style.
+- **Review standards:** `CODING_STANDARDS.md`. The reviewer reads this; implementers should too.
+- **Tracker conventions:** `docs/agents/issue-tracker.md`.
 
-Issues and specs live in GitHub Issues (`gerrcass/process-mapper`), managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+## Commands
 
-### Triage labels
+- `pnpm dev` — local development.
+- `pnpm verify` — lint, typecheck, unit/component tests, and production build. This is the definition of a clean branch.
+- `pnpm test:e2e` — Playwright journeys; run when touching the editor, persistence, or exports.
 
-Matt's five canonical triage roles, using the default label strings. See `docs/agents/triage-labels.md`.
+No environment variables, backend, or accounts. Map data lives in the browser; see ADR-0001.
 
-### Domain docs
+## Rules that are easy to miss
 
-Single-context layout: `GLOSSARY.md` at the root and decisions in `docs/adr/`. See `docs/agents/domain.md`.
+- The **flow graph owns process steps**; the SIPOC Process lane is derived. Do not add a second step collection. See ADR-0002.
+- Map mutations go through **pure operations** and then the store. Components do not edit document internals.
+- Validate every boundary: persisted payloads, imported files, and parsed form values.
+- The editor is client-side and hydration-safe: no `localStorage` reads during render, and a stable skeleton until rehydration finishes.
+- Use the existing UI primitives and design tokens. New dependencies need a reason in the ticket.
+- Interactive controls need an accessible name, visible focus, and a keyboard path.
+
+## Skill workflow
+
+User-invoked skills are in `.agents/skills/`. The working sequence for this repo is `/grill-with-docs` → `/to-spec` → `/to-tickets` → `/implement-spec`, with `/pr`, `/code-review`, and `/retro` at close-out. Do not re-run `/setup-matt-pocock-skills`; its output is already in `docs/agents/`.
