@@ -334,9 +334,11 @@ export function Lane({
   return (
     <section
       ref={laneRef}
+      id={`lane-${lane}`}
+      tabIndex={-1}
       aria-labelledby={`lane-${lane}-title`}
       className={cn(
-        "sipoc-lane flex min-h-[340px] flex-col rounded-card border",
+        "sipoc-lane flex min-h-[340px] flex-col rounded-card border focus:outline-2 focus:outline-offset-2 focus:outline-accent",
         style.tint,
         style.line,
       )}

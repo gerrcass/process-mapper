@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { mapStats } from "@/domain/operations";
+import { evaluateReadiness, type ReadinessCheck } from "@/domain/readiness";
 import { STATUS_LABELS, type MapStatus } from "@/domain/types";
 import { useWorkspace } from "@/store/workspace";
 import { formatRelativeTime } from "@/lib/time";
@@ -35,6 +36,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MapNotFound } from "@/components/map-not-found";
+import { ReadinessBadge } from "@/components/readiness/readiness-badge";
+import { ReadinessDialog } from "@/components/readiness/readiness-dialog";
 import { DeleteMapDialog } from "@/components/map-delete-dialog";
 import { MapDetailsDialog } from "./map-dialogs";
 
@@ -81,6 +84,7 @@ export function Editor({ mapId }: { mapId: string }) {
   const canRedo = useWorkspace((state) => state.future.length > 0);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [reviewOpen, setReviewOpen] = React.useState(false);
   useUndoRedoShortcuts();
 
   const view = searchParams.get("view") === "flow" ? "flow" : "sipoc";
@@ -88,11 +92,37 @@ export function Editor({ mapId }: { mapId: string }) {
   if (!map) return <MapNotFound />;
 
   const stats = mapStats(map);
+  const readiness = evaluateReadiness(map);
   const sipocHref = `/maps/${map.id}`;
   const flowHref = `/maps/${map.id}?view=flow`;
 
   const openFlow = (nodeId: string) => {
     router.push(`/maps/${map.id}?view=flow&node=${encodeURIComponent(nodeId)}`);
+  };
+
+  const fixReadinessCheck = (check: ReadinessCheck) => {
+    setReviewOpen(false);
+    if (check.id === "purpose") {
+      setDetailsOpen(true);
+      return;
+    }
+    if (check.view === "flow") {
+      if (view !== "flow") router.push(flowHref);
+      window.setTimeout(() => document.getElementById("flow-view")?.focus(), 360);
+      return;
+    }
+    const targetLane =
+      check.id === "suppliers"
+        ? "suppliers"
+        : check.id === "inputs"
+          ? "inputs"
+          : check.id === "outputs"
+            ? "outputs"
+            : check.id === "customers"
+              ? "customers"
+              : "process";
+    if (view !== "sipoc") router.push(sipocHref);
+    window.setTimeout(() => document.getElementById(`lane-${targetLane}`)?.focus(), 360);
   };
 
   const duplicate = () => {
@@ -131,6 +161,12 @@ export function Editor({ mapId }: { mapId: string }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
+            <ReadinessBadge
+              score={readiness.score}
+              level={readiness.level}
+              onClick={() => setReviewOpen(true)}
+            />
+            <span className="mx-1 hidden h-5 w-px bg-line sm:inline-block" aria-hidden="true" />
             <div className="hidden items-center gap-1 sm:flex">
               <Tooltip label="Undo">
                 <Button
@@ -255,6 +291,14 @@ export function Editor({ mapId }: { mapId: string }) {
         </main>
       )}
 
+      {reviewOpen ? (
+        <ReadinessDialog
+          map={map}
+          open={reviewOpen}
+          onOpenChange={setReviewOpen}
+          onNavigate={fixReadinessCheck}
+        />
+      ) : null}
       {detailsOpen ? (
         <MapDetailsDialog map={map} open={detailsOpen} onOpenChange={setDetailsOpen} />
       ) : null}
