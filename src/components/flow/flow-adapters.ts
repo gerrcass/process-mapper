@@ -15,6 +15,14 @@ export const NODE_TYPES = {
 
 export const EDGE_TYPES = { atlas: AtlasFlowEdge } satisfies EdgeTypes;
 
+/**
+ * True when the map stores a viewport other than the default. Such a map
+ * restores its saved viewport on open instead of fitting the flow in view.
+ */
+export function hasSavedViewport(map: ProcessMap): boolean {
+  return map.viewport.x !== 0 || map.viewport.y !== 0 || map.viewport.zoom !== 1;
+}
+
 export function toFlowNodes(map: ProcessMap, selectedNodeId: string | null): AtlasNode[] {
   const indexes = new Map(processSteps(map).map((step, index) => [step.id, index + 1]));
   return map.nodes.map((node) => ({

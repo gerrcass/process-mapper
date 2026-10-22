@@ -136,18 +136,54 @@ describe("share link payload codec", () => {
     }
   });
 
-  it("rejects a payload without a format prefix", async () => {
+  it("rejects a payload without a format prefix with its own message", async () => {
     const result = await decodeSharePayload("YWJjZA");
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("unsupported format");
+    if (!result.ok) expect(result.error).toBe("This share link is missing its format prefix.");
   });
 
-  it("rejects an unknown format prefix", async () => {
+  it("rejects an unknown format prefix and names the format", async () => {
     const result = await decodeSharePayload("x9.YWJjZA");
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("unsupported format");
+    if (!result.ok) expect(result.error).toBe("This share link uses an unsupported format: x9.");
+  });
+
+  it("names a future format version among unknown prefixes", async () => {
+    const result = await decodeSharePayload("u2.YWJjZA");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("This share link uses an unsupported format: u2.");
+  });
+
+  it("rejects when the decompressor fails on the write side instead of reading truncated output", async () => {
+    // A decompressor whose writable side rejects while the readable side
+    // resolves with a truncated prefix of the JSON: a write-side-only failure
+    // must surface as corruption, not as a misleading JSON error.
+    vi.stubGlobal(
+      "DecompressionStream",
+      class WriteSideFailure {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        constructor(format: string) {}
+        readable = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new Uint8Array([123])); // a lone "{"
+            controller.close();
+          },
+        });
+        writable = new WritableStream<Uint8Array>({
+          write() {
+            throw new Error("decompression failed");
+          },
+        });
+      },
+    );
+
+    const result = await decodeSharePayload("z1.YWJjZA");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toBe("This share link is damaged: the payload is corrupt.");
   });
 
   it("rejects a payload with invalid base64", async () => {

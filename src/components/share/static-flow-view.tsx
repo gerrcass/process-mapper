@@ -9,7 +9,13 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { ProcessMap } from "@/domain/types";
-import { EDGE_TYPES, NODE_TYPES, toFlowEdges, toFlowNodes } from "@/components/flow/flow-adapters";
+import {
+  EDGE_TYPES,
+  NODE_TYPES,
+  hasSavedViewport,
+  toFlowEdges,
+  toFlowNodes,
+} from "@/components/flow/flow-adapters";
 
 /**
  * The flow as a static diagram for the shared view: the existing node and
@@ -19,7 +25,6 @@ import { EDGE_TYPES, NODE_TYPES, toFlowEdges, toFlowNodes } from "@/components/f
 export function StaticFlowView({ map }: { map: ProcessMap }) {
   const nodes = toFlowNodes(map, null);
   const edges = toFlowEdges(map, null);
-  const hasSavedViewport = map.viewport.x !== 0 || map.viewport.y !== 0 || map.viewport.zoom !== 1;
 
   return (
     <ReactFlowProvider>
@@ -35,7 +40,7 @@ export function StaticFlowView({ map }: { map: ProcessMap }) {
           deleteKeyCode={null}
           panOnScroll
           defaultViewport={map.viewport}
-          fitView={!hasSavedViewport && map.nodes.length > 0}
+          fitView={!hasSavedViewport(map) && map.nodes.length > 0}
           fitViewOptions={{ padding: 0.2, minZoom: 0.55, maxZoom: 0.95 }}
           minZoom={0.2}
           maxZoom={2}

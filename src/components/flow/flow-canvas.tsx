@@ -52,6 +52,7 @@ import {
 import {
   EDGE_TYPES,
   NODE_TYPES,
+  hasSavedViewport,
   toFlowEdges,
   toFlowNodes,
   type AtlasEdge,
@@ -284,8 +285,6 @@ function FlowCanvasInner({
     toast("Nodes connected.");
   };
 
-  const hasSavedViewport = map.viewport.x !== 0 || map.viewport.y !== 0 || map.viewport.zoom !== 1;
-
   return (
     <div
       ref={wrapperRef}
@@ -337,7 +336,7 @@ function FlowCanvasInner({
         onNodeDragStop={(_, node) => endNodeDrag(map.id, node.id, node.position)}
         onMoveEnd={(_, viewport) => setViewport(map.id, viewport)}
         defaultViewport={map.viewport}
-        fitView={!hasSavedViewport && map.nodes.length > 0}
+        fitView={!hasSavedViewport(map) && map.nodes.length > 0}
         fitViewOptions={{ padding: 0.2, minZoom: 0.55, maxZoom: 0.95 }}
         minZoom={0.2}
         maxZoom={2}

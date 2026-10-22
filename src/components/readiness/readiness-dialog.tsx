@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowUpRight, Check, TriangleAlert } from "lucide-react";
 import type { ProcessMap } from "@/domain/types";
 import {
   evaluateReadiness,
@@ -17,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ReadinessRing } from "./readiness-badge";
+import { ReadinessCheckRow, ReadinessSummary } from "./readiness-summary";
 
 const GROUPS: ReadinessGroup[] = ["frame", "process", "flow"];
 
@@ -44,21 +43,7 @@ export function ReadinessDialog({
             A checklist for a complete, coherent process map. Use it as a guide, not a gate.
           </DialogDescription>
 
-          <div className="mt-5 flex items-center gap-4">
-            <ReadinessRing score={readiness.score} size={54} />
-            <div>
-              <p className="font-display text-[48px] leading-none tracking-[-0.02em] text-ink">
-                {readiness.score}
-                <span className="ml-1 font-sans text-[13px] font-normal tracking-normal text-muted">
-                  / 100
-                </span>
-              </p>
-              <p className="mt-1 text-[11.5px] text-ink-soft">
-                <span className="font-medium">{readiness.passed}</span> of {readiness.total} checks
-                pass
-              </p>
-            </div>
-          </div>
+          <ReadinessSummary readiness={readiness} presentation="review" className="mt-5" />
         </div>
 
         <div className="max-h-[54dvh] overflow-y-auto">
@@ -77,55 +62,14 @@ export function ReadinessDialog({
                 </div>
                 <ul className="mt-2 space-y-1">
                   {checks.map((check) => (
-                    <li
+                    <ReadinessCheckRow
                       key={check.id}
-                      className={cn(
-                        "flex items-start gap-2.5 rounded-[8px] px-2 py-2",
-                        !check.passed && "bg-warning-soft/50",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
-                          check.passed
-                            ? "bg-success-soft text-success"
-                            : "bg-warning/15 text-warning",
-                        )}
-                        aria-hidden="true"
-                      >
-                        {check.passed ? (
-                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                        ) : (
-                          <TriangleAlert className="h-2.5 w-2.5" />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-medium leading-4 text-ink">
-                          {check.label}
-                          <span className="sr-only">
-                            {check.passed ? ": passed" : ": needs work"}
-                          </span>
-                        </p>
-                        {!check.passed ? (
-                          <p className="mt-0.5 text-[10.5px] leading-4 text-muted">
-                            {check.detail}
-                          </p>
-                        ) : null}
-                        {!check.passed ? (
-                          <button
-                            type="button"
-                            onClick={() => onNavigate(check)}
-                            className="mt-1 inline-flex items-center gap-1 rounded-[4px] text-[10.5px] font-medium text-accent-strong transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                          >
-                            {check.action}
-                            <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-                          </button>
-                        ) : null}
-                      </div>
-                      <span className="mt-0.5 shrink-0 font-mono text-[9px] text-muted">
-                        {check.weight}
-                      </span>
-                    </li>
+                      check={check}
+                      statusIcon="badge"
+                      onNavigate={onNavigate}
+                      showWeight
+                      className={cn("px-2 py-2", !check.passed && "bg-warning-soft/50")}
+                    />
                   ))}
                 </ul>
               </section>

@@ -629,28 +629,36 @@ export function importedTitle(title: string, existingTitles: string[]): string {
   return candidate;
 }
 
-export function importMap(
+/**
+ * Rebuilds a document as a workspace import: the collision-safe imported
+ * title, a fresh identity, and draft status. Both file imports and adopted
+ * share links use this shape; only the origin differs (ADR-0003: adopting a
+ * snapshot is an import).
+ */
+function rebuildImportedMap(
   source: ProcessMap,
   options: { existingTitles: string[]; id: string; now: string },
+  origin: Extract<ProcessMap["origin"], "import" | "link">,
 ): ProcessMap {
   return rebuildWithFreshIds(source, {
     id: options.id,
     now: options.now,
     title: importedTitle(source.title, options.existingTitles),
-    origin: "import",
+    origin,
     status: "draft",
   });
+}
+
+export function importMap(
+  source: ProcessMap,
+  options: { existingTitles: string[]; id: string; now: string },
+): ProcessMap {
+  return rebuildImportedMap(source, options, "import");
 }
 
 export function adoptMap(
   source: ProcessMap,
   options: { existingTitles: string[]; id: string; now: string },
 ): ProcessMap {
-  return rebuildWithFreshIds(source, {
-    id: options.id,
-    now: options.now,
-    title: importedTitle(source.title, options.existingTitles),
-    origin: "link",
-    status: "draft",
-  });
+  return rebuildImportedMap(source, options, "link");
 }
