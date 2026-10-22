@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ArrowLeft, Check, Eye, Link2, Plus, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Eye, Link2, Plus, TriangleAlert } from "lucide-react";
 import type { ProcessMap } from "@/domain/types";
 import { decodeSharePayload } from "@/domain/share-link";
 import { mapStats } from "@/domain/operations";
@@ -16,7 +16,7 @@ import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/pill";
 import { SipocBoard } from "@/components/sipoc/sipoc-board";
-import { ReadinessRing } from "@/components/readiness/readiness-badge";
+import { ReadinessSummary } from "@/components/readiness/readiness-summary";
 
 function StaticFlowLoading() {
   return (
@@ -126,7 +126,6 @@ function SharedReadOnly({ map }: { map: ProcessMap }) {
   const [adopting, setAdopting] = React.useState(false);
   const stats = mapStats(map);
   const readiness = evaluateReadiness(map);
-  const failedChecks = readiness.checks.filter((check) => !check.passed);
 
   const handleAdopt = async () => {
     setAdopting(true);
@@ -189,45 +188,12 @@ function SharedReadOnly({ map }: { map: ProcessMap }) {
           aria-labelledby="shared-readiness-title"
           className="mt-6 rounded-panel border border-line bg-paper-raised p-5"
         >
-          <div className="flex items-center gap-4">
-            <ReadinessRing score={readiness.score} size={44} />
-            <div>
-              <h2 id="shared-readiness-title" className="text-[13px] font-semibold text-ink">
-                Readiness
-              </h2>
-              <p className="mt-0.5 text-[15px] font-medium leading-5 text-ink">{readiness.level}</p>
-              <p className="mt-0.5 text-[11.5px] text-muted">
-                {readiness.score} of 100 · {readiness.passed} of {readiness.total} checks pass
-              </p>
-            </div>
-          </div>
-          {failedChecks.length > 0 ? (
-            <ul className="mt-4 space-y-2">
-              {failedChecks.map((check) => (
-                <li
-                  key={check.id}
-                  className="flex items-start gap-2.5 rounded-[8px] bg-warning-soft/50 px-3 py-2"
-                >
-                  <TriangleAlert
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning"
-                    aria-hidden="true"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-[12px] font-medium leading-4 text-ink">
-                      {check.label}
-                      <span className="sr-only">: needs work</span>
-                    </p>
-                    <p className="mt-0.5 text-[10.5px] leading-4 text-muted">{check.detail}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-success">
-              <Check className="h-3.5 w-3.5" aria-hidden="true" />
-              All checks pass.
-            </p>
-          )}
+          <ReadinessSummary
+            readiness={readiness}
+            presentation="shared"
+            headingId="shared-readiness-title"
+            showFailedChecks
+          />
         </section>
 
         <section aria-label="SIPOC sheet" className="mt-8">

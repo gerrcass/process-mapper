@@ -194,6 +194,65 @@ test("a broken share link names the reason and leaves the workspace untouched", 
   await expect(page.getByRole("link", { name: /\(imported\)/ })).toHaveCount(0);
 });
 
+test("a shared link reads in a fresh context, adopts, and the edit persists", async ({
+  browser,
+  page,
+}) => {
+  // The author copies the link from the editor's share dialog.
+  await page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true }).click();
+  await expect(page.getByRole("region", { name: "Suppliers" })).toBeVisible();
+  await page.getByRole("button", { name: "Share this map" }).click();
+  const linkInput = page.getByLabel("Share link");
+  await expect(linkInput).not.toHaveValue("");
+  const shareLink = await linkInput.inputValue();
+
+  // The recipient opens the link in a context with cleared storage.
+  const context = await browser.newContext();
+  const recipient = await context.newPage();
+  recipient.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  recipient.on("pageerror", (error) => consoleErrors.push(error.message));
+  await recipient.goto(shareLink);
+  await expect(recipient.getByRole("heading", { level: 1, name: SUPPORT_MAP })).toBeVisible();
+  await expect(recipient.getByRole("note")).toContainText("Read-only");
+  await expect(recipient.getByRole("region", { name: "Process" })).toContainText(
+    "Triage the ticket",
+  );
+  await expect(recipient.getByText("Ready to share")).toBeVisible();
+  await expect(recipient.getByRole("button", { name: "Add supplier" })).toHaveCount(0);
+
+  // Adopting lands in the editor on the adopted map: draft, renamed for the collision.
+  await recipient.getByRole("button", { name: "Add to my workspace" }).click();
+  await expect(recipient).toHaveURL(/\/maps\/?\?map=map-/);
+  await expect(recipient.getByRole("textbox", { name: "Map title" })).toHaveValue(
+    `${SUPPORT_MAP} (imported)`,
+  );
+  await expect(recipient.getByRole("button", { name: /Status: Draft/ })).toBeVisible();
+
+  // Edit a SIPOC process step label on the adopted map.
+  const stepTitle = recipient.getByRole("textbox", { name: "Step 1 title" });
+  await expect(stepTitle).toHaveValue("Triage the ticket");
+  await stepTitle.fill("Screen the ticket");
+  await stepTitle.blur();
+  await expect(recipient.getByRole("textbox", { name: "Step 1 title" })).toHaveValue(
+    "Screen the ticket",
+  );
+
+  // The edit persists across a reload, and the dashboard shows the origin.
+  await recipient.reload();
+  await expect(recipient.getByRole("region", { name: "Process" })).toBeVisible();
+  await expect(recipient.getByRole("textbox", { name: "Step 1 title" })).toHaveValue(
+    "Screen the ticket",
+  );
+  await recipient.getByRole("link", { name: "Back to workspace" }).click();
+  await expect(
+    recipient.getByRole("link", { name: `Open ${SUPPORT_MAP} (imported)` }),
+  ).toBeVisible();
+  await expect(recipient.getByText("From a link")).toBeVisible();
+  await context.close();
+});
+
 test("the dashboard and editor remain usable at phone width", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");

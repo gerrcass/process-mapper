@@ -83,7 +83,9 @@ async function readStream(stream: ReadableStream<Uint8Array>): Promise<Uint8Arra
 /**
  * Runs `input` through a transform stream and returns its full output. Both
  * the readable and the writable side are awaited so a stream failure is
- * rejected exactly once instead of surfacing as an unhandled rejection.
+ * rejected exactly once: a write-side failure alone must reject rather than
+ * resolve with truncated output, and when a stream error rejects both sides
+ * only the readable rejection is propagated (they carry the same reason).
  */
 async function pump(
   stream: { readable: ReadableStream<Uint8Array>; writable: WritableStream },
@@ -96,10 +98,11 @@ async function pump(
     await writer.write(input);
     await writer.close();
   } catch {
-    // The readable side carries the same failure; await it below.
+    // The rejection is awaited through the settled promises below.
   }
-  const [readResult] = await settled;
+  const [readResult, writeResult] = await settled;
   if (readResult.status === "rejected") throw readResult.reason;
+  if (writeResult.status === "rejected") throw writeResult.reason;
   return readResult.value;
 }
 
@@ -132,8 +135,8 @@ export async function encodeSharePayload(map: ProcessMap): Promise<string> {
 /**
  * Decodes a fragment payload into a validated process map. Accepts both the
  * compressed and the plain format. Returns a result instead of throwing, and
- * distinguishes empty payloads, unknown prefixes, bad base64, non-JSON, and
- * schema failures in the error message.
+ * distinguishes empty payloads, missing prefixes, unknown prefixes, bad
+ * base64, non-JSON, and schema failures in the error message.
  */
 export async function decodeSharePayload(payload: string): Promise<ParseResult<ProcessMap>> {
   if (payload.length === 0) {
@@ -149,7 +152,17 @@ export async function decodeSharePayload(payload: string): Promise<ParseResult<P
     body = payload.slice(COMPRESSED_PREFIX.length);
     compressed = true;
   } else {
-    return { ok: false, error: "This share link uses an unsupported format." };
+    // Distinguish a future or unknown versioned prefix from a payload that
+    // has no recognizable prefix at all (ADR-0003: unknown prefixes get
+    // their own message naming the format).
+    const prefixMatch = /^([a-z]+\d+)\./.exec(payload);
+    if (prefixMatch) {
+      return {
+        ok: false,
+        error: `This share link uses an unsupported format: ${prefixMatch[1]}.`,
+      };
+    }
+    return { ok: false, error: "This share link is missing its format prefix." };
   }
 
   if (body.length === 0) {

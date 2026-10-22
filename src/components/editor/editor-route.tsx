@@ -26,6 +26,9 @@ export function EditorRoute() {
     // Re-read on hash navigation, which does not reload the document.
     let cancelled = false;
     const readFragment = () => {
+      // Deferred on purpose: the react-hooks set-state-in-effect rule
+      // (React 19 rules) forbids a synchronous setState in an effect. Do not
+      // "simplify" this into a direct setState call.
       void Promise.resolve().then(() => {
         if (cancelled) return;
         setSharedPayload(sharePayloadFromHash(window.location.hash));
