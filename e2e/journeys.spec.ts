@@ -170,6 +170,30 @@ test("resilience states cover corrupt storage, a missing map, and an empty flow"
   await expect(page.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("New step");
 });
 
+test("a broken share link names the reason and leaves the workspace untouched", async ({
+  page,
+}) => {
+  // A payload whose base64 is valid but whose content is not JSON.
+  await page.goto("/maps#shared=u1.bm90IGpzb24");
+  await expect(page.getByRole("heading", { name: "This link cannot be read." })).toBeVisible();
+  await expect(page.getByText(/the payload is not valid JSON/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to workspace" })).toBeVisible();
+
+  // A link with an empty payload explains that it carries no map.
+  await page.goto("/maps#shared=");
+  await expect(page.getByText("This share link carries no map.")).toBeVisible();
+
+  // A link whose fragment was lost in transit gets the same explanation.
+  await page.goto("/maps");
+  await expect(page.getByText("This share link carries no map.")).toBeVisible();
+
+  // The workspace is untouched: the seeded maps, and no partial write.
+  await page.getByRole("link", { name: "Back to workspace" }).click();
+  await expect(page.getByRole("heading", { name: /Frame the process/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: `Open ${SUPPORT_MAP}`, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /\(imported\)/ })).toHaveCount(0);
+});
+
 test("the dashboard and editor remain usable at phone width", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");

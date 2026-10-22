@@ -137,7 +137,7 @@ export async function encodeSharePayload(map: ProcessMap): Promise<string> {
  */
 export async function decodeSharePayload(payload: string): Promise<ParseResult<ProcessMap>> {
   if (payload.length === 0) {
-    return { ok: false, error: "This share link carries no payload." };
+    return { ok: false, error: "This share link carries no map." };
   }
 
   let body: string;
@@ -153,7 +153,7 @@ export async function decodeSharePayload(payload: string): Promise<ParseResult<P
   }
 
   if (body.length === 0) {
-    return { ok: false, error: "This share link carries no payload." };
+    return { ok: false, error: "This share link carries no map." };
   }
 
   const bytes = base64UrlToBytes(body);

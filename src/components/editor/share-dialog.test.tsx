@@ -16,6 +16,21 @@ function supportMap() {
   return structuredClone(createSeededWorkspace(TEST_NOW)[0]);
 }
 
+/**
+ * Deterministic pseudo-random text that deflate cannot collapse, so the
+ * encoded payload genuinely exceeds the share link budget.
+ */
+function bulkyDescription(length: number): string {
+  const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_,./";
+  let seed = 987654321;
+  let out = "";
+  for (let index = 0; index < length; index += 1) {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    out += alphabet[seed % alphabet.length];
+  }
+  return out;
+}
+
 beforeEach(() => {
   window.history.replaceState({}, "", "/maps?map=map-support-escalation");
 });
@@ -66,5 +81,21 @@ describe("share dialog", () => {
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(/Could not copy the link/),
     );
+  });
+
+  it("refuses to produce a link when the map exceeds the budget and points at the JSON export", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    clipboard(writeText);
+    const oversized = { ...supportMap(), description: bulkyDescription(60_000) };
+
+    render(<ShareDialog map={oversized} open onOpenChange={vi.fn()} />);
+
+    expect(await screen.findByText("This map is too large for a share link.")).toBeInTheDocument();
+    expect(screen.getByText(/Export menu/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Share link")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Copy link" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Open preview/ })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href*="shared="]')).toBeNull();
+    expect(writeText).not.toHaveBeenCalled();
   });
 });
