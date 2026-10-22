@@ -17,7 +17,7 @@ Local-first SIPOC and process-mapping demo. Next.js App Router, TypeScript, Tail
 - `pnpm dev` — local development.
 - `pnpm verify` — lint, typecheck, unit/component tests, server build, and static export. This is the definition of a clean branch.
 - `pnpm build:static` — reproduce the GitHub Pages static export locally.
-- `pnpm test:e2e` — Playwright journeys; run when touching the editor, persistence, exports, or routes.
+- `pnpm test:e2e` — Playwright journeys; run when touching the editor, persistence, exports, or routes. For UI verification, drive the installed Playwright Chromium (`pnpm exec playwright ...`); it is already there.
 
 There are no runtime environment variables, backend, or accounts. Map data lives in the browser; see ADR-0001. Deployment-only Pages variables are documented in `README.md`.
 
@@ -28,7 +28,7 @@ There are no runtime environment variables, backend, or accounts. Map data lives
 - Validate every boundary: persisted payloads, imported files, share link payloads, and parsed form values.
 - The editor is client-side and hydration-safe: no `localStorage` reads during render, and a stable skeleton until rehydration finishes.
 - Use the existing UI primitives and design tokens. New dependencies need a reason in the ticket.
-- Share links ride the fragment of the `/maps` route and are validated like any other boundary. See ADR-0003.
+- Share links ride the fragment of the `/maps` route and are validated like any other boundary. A link carries a fixed snapshot; recipients adopt it into their workspace. See ADR-0003 and the glossary terms.
 - Interactive controls need an accessible name, visible focus, and a keyboard path.
 - **Static hosting:** GitHub Pages serves a static export and the editor is the `/maps?map=<id>` route. Read the static-export rules in `CODING_STANDARDS.md` before changing routes, metadata, or assets.
 

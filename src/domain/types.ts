@@ -3,7 +3,7 @@ export const SCHEMA_VERSION = 1;
 export const MAP_STATUSES = ["draft", "active", "archived"] as const;
 export type MapStatus = (typeof MAP_STATUSES)[number];
 
-export const MAP_ORIGINS = ["demo", "blank", "template", "import", "duplicate"] as const;
+export const MAP_ORIGINS = ["demo", "blank", "template", "import", "duplicate", "link"] as const;
 export type MapOrigin = (typeof MAP_ORIGINS)[number];
 
 export const ENTRY_LANES = ["suppliers", "inputs", "outputs", "customers"] as const;

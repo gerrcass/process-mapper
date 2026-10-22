@@ -8,6 +8,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - Domain operations are pure functions over a process map. They return new documents, update timestamps, and never touch browser APIs, React, or the store.
 - The store is the only mutation path. Components call store actions; they do not assemble partial documents or mutate nested objects.
 - Validate at the edge: persisted state, imported JSON, share link payloads, and file input. Once validated, internal code can trust the document type.
+- A share link carries a **snapshot** of one map, and **adopt** is the only verb for taking it into a workspace. Use the glossary terms, never public link, clone, or import link.
 - Keep the flow/node adapter separate from the domain model so React Flow types do not leak into domain tests.
 - Entity IDs inside pure operations are deterministic (`nextEntityId(...)`) or injected. Random identity belongs to the store or import boundary, never to a pure map operation.
 
@@ -57,6 +58,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - Test external behaviour, not implementation shape. A refactor that preserves behaviour should not break tests.
 - Derive expected values independently: known-good literals, worked examples, or the spec. Never recompute an expected value with the same algorithm as the implementation.
 - Prefer the highest seam available: pure domain functions first, store second, component third, browser last.
+- Check the spec's Testing Decisions against the ticket set. A browser seam belongs to the ticket that completes the journey, named in its acceptance criteria, not discovered at review.
 - Every bug fix starts with a test that fails for the right reason.
 - Avoid snapshots of whole pages or trees. Assert what the user can observe.
 - Keep the full suite fast enough to run before every commit; put slow journeys behind the e2e command.

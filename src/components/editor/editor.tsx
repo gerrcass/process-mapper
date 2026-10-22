@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   PencilLine,
   Redo2,
+  Share2,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -40,6 +41,7 @@ import { MapNotFound } from "@/components/map-not-found";
 import { ReadinessBadge } from "@/components/readiness/readiness-badge";
 import { ReadinessDialog } from "@/components/readiness/readiness-dialog";
 import { ExportMenu } from "./export-menu";
+import { ShareDialog } from "./share-dialog";
 import { DeleteMapDialog } from "@/components/map-delete-dialog";
 import { MapDetailsDialog } from "./map-dialogs";
 
@@ -87,6 +89,7 @@ export function Editor({ mapId }: { mapId: string }) {
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [reviewOpen, setReviewOpen] = React.useState(false);
+  const [shareOpen, setShareOpen] = React.useState(false);
   const saveAnnouncement = React.useRef<HTMLParagraphElement>(null);
   useUndoRedoShortcuts();
 
@@ -166,6 +169,14 @@ export function Editor({ mapId }: { mapId: string }) {
               level={readiness.level}
               onClick={() => setReviewOpen(true)}
             />
+            <Button
+              variant="secondary"
+              aria-label="Share this map"
+              onClick={() => setShareOpen(true)}
+            >
+              <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden lg:inline">Share</span>
+            </Button>
             <ExportMenu map={map} view={view} />
             <span className="mx-1 hidden h-5 w-px bg-line sm:inline-block" aria-hidden="true" />
             <div className="hidden items-center gap-1 sm:flex">
@@ -304,6 +315,7 @@ export function Editor({ mapId }: { mapId: string }) {
       {detailsOpen ? (
         <MapDetailsDialog map={map} open={detailsOpen} onOpenChange={setDetailsOpen} />
       ) : null}
+      {shareOpen ? <ShareDialog map={map} open={shareOpen} onOpenChange={setShareOpen} /> : null}
       {deleteOpen ? (
         <DeleteMapDialog
           map={map}

@@ -2,7 +2,7 @@
 
 [**Open the live demo →**](https://gerrcass.github.io/process-mapper/)
 
-A local-first SIPOC and process-mapping workspace. Frame a process as a five-lane SIPOC sheet, map the flow behind it, and leave with something you can share. No account, backend, or runtime configuration.
+A local-first SIPOC and process-mapping workspace. Frame a process as a five-lane SIPOC sheet, map the flow behind it, and leave with something you can share — a read-only link, a JSON export, or a printed sheet. No account, backend, or runtime configuration.
 
 [![The Process Atlas workspace with two seeded process maps and a template gallery](docs/screenshots/01-workspace.png)](https://gerrcass.github.io/process-mapper/)
 
@@ -50,12 +50,15 @@ Canvas position and SIPOC order are deliberately independent. Dragging a node ch
 - **Readiness** — an advisory 0–100 score with nine weighted checks grouped into Frame, Process, and Flow. Failed checks link back to the relevant lane or flow.
 - **Undo and redo** — workspace-wide history with buttons and keyboard shortcuts. A canvas drag is one history step. History is in memory and starts empty on reload.
 - **Data portability** — JSON export and validated import with fresh identities, `(imported)` collision names, and actionable errors; high-resolution flow PNG; a dedicated five-lane print stylesheet.
+- **Share links** — a read-only snapshot of one map carried in the URL fragment, readable by anyone with the link. Copy a link from the editor, send it, and the recipient can read the SIPOC, the flow, and the readiness summary before adopting the snapshot into their workspace.
 - **Resilience** — versioned schema, validation at every boundary, corrupt-payload quarantine, storage-failure banner, missing-map and empty-workspace states, error boundary.
 - **Accessibility** — labelled controls, visible focus, keyboard lane reordering, arrow-key and drag paths, dialogs from Radix primitives, reduced-motion support.
 
 ![The flow canvas with the support escalation process](docs/screenshots/03-flow.png)
 
 ![Flow view with the node inspector open](docs/screenshots/04-flow-inspector.png)
+
+![The read-only shared view of a process map opened from a share link](docs/screenshots/09-shared-view.png)
 
 ## Readiness
 
@@ -116,10 +119,10 @@ No `.env` file is needed.
 
 Tests sit at the seams where the product can fail without a browser:
 
-- **Domain** (`src/domain/*.test.ts`) — entry and step CRUD, SIPOC reordering, edge validation, readiness weights and boundaries, Tidy flow with cycles and disconnected components, schema validation, import/export shape and identity regeneration.
-- **Store** (`src/store/workspace.test.ts`) — create, duplicate, delete, import, reset, undo/redo, drag transactions, valid hydration, corrupt-payload fallback, newer-schema rejection.
-- **Components** — inline SIPOC edits and keyboard reordering, process step edits, inspector fields through to SIPOC, readiness dialog, dashboard search, new-map validation.
-- **Browser** (`e2e/journeys.spec.ts`) — cross-view edits surviving a reload, template lifecycle with delete and JSON import, corrupt storage and empty flow, and phone-width usability.
+- **Domain** (`src/domain/*.test.ts`) — entry and step CRUD, SIPOC reordering, edge validation, readiness weights and boundaries, Tidy flow with cycles and disconnected components, schema validation, import/export shape and identity regeneration, share-link encoding, decoding, and the size budget.
+- **Store** (`src/store/workspace.test.ts`) — create, duplicate, delete, import, adopt, reset, undo/redo, drag transactions, valid hydration, corrupt-payload fallback, newer-schema rejection.
+- **Components** — inline SIPOC edits and keyboard reordering, process step edits, inspector fields through to SIPOC, readiness dialog, dashboard search, new-map validation, share dialog, shared view.
+- **Browser** (`e2e/journeys.spec.ts`) — cross-view edits surviving a reload, template lifecycle with delete and JSON import, corrupt storage and empty flow, a broken share link naming its reason, reading and adopting a shared snapshot before editing it, and phone-width usability.
 
 ```bash
 pnpm exec playwright install chromium
@@ -137,12 +140,14 @@ src/
 │   ├── layout.ts        deterministic Tidy flow
 │   ├── readiness.ts     weighted score and checklist
 │   ├── templates.ts     three templates and two seeded maps
-│   └── import-export.ts JSON parsing and filenames
+│   ├── import-export.ts JSON parsing and filenames
+│   └── share-link.ts    fragment payload codec for share links
 ├── store/workspace.ts   Zustand store, history, validated persistence
 ├── components/
 │   ├── dashboard/       workspace, map cards, dialogs
 │   ├── sipoc/           five-lane board, lanes, entry and step cards
 │   ├── flow/            React Flow adapter, nodes, edges, inspector
+│   ├── share/           the read-only view behind a share link
 │   └── readiness/       header ring and review dialog
 └── lib/                 time, download, export image, keyboard hooks
 ```
@@ -151,13 +156,17 @@ The domain layer is pure and React-free. Components call store actions; they do 
 
 Persistence is hydration-safe. The store uses `skipHydration`, the app renders a stable skeleton until rehydration finishes, and no `localStorage` is read during render. Every persisted payload is validated before it reaches the store. Invalid or newer payloads fall back to the seeded workspace, keep the bad payload as a backup, and surface a dismissible notice.
 
-See [ADR-0001](docs/adr/0001-local-first-persistence.md) and [ADR-0002](docs/adr/0002-flow-graph-owns-process-steps.md) for the two decisions that shape the app.
+See [ADR-0001](docs/adr/0001-local-first-persistence.md), [ADR-0002](docs/adr/0002-flow-graph-owns-process-steps.md), and [ADR-0003](docs/adr/0003-share-links-carry-the-snapshot-in-the-fragment.md) for the three decisions that shape the app.
 
 ## Local-first caveat
 
 Maps live in the `localStorage` of one browser profile. There is no sync, account, or server copy. Clearing site data, using a private window, or switching browsers loses the workspace unless you export the map as JSON first. Export is the backup path; import restores a map with a fresh identity.
 
 The app quarantines an unreadable payload under `process-atlas.workspace.corrupt` and restores the seeded maps rather than crashing.
+
+## Share links are snapshots
+
+A share link carries the map as it was when the link was copied. It never updates, and anyone with the link can read the map — the share dialog and the shared view both say so. Re-share after editing, and use the JSON export for a map too large to fit in a link. The snapshot travels in the URL fragment, so no server ever sees it; see [ADR-0003](docs/adr/0003-share-links-carry-the-snapshot-in-the-fragment.md).
 
 ## Screenshots
 
@@ -171,11 +180,13 @@ The app quarantines an unreadable payload under `process-atlas.workspace.corrupt
 
 A print-ready SIPOC sheet is in [docs/screenshots/08-print-sheet.png](docs/screenshots/08-print-sheet.png).
 
+The shared view opened from a share link is in [docs/screenshots/09-shared-view.png](docs/screenshots/09-shared-view.png).
+
 ## Deployment and GitHub Pages
 
 The live demo runs on GitHub Pages: **https://gerrcass.github.io/process-mapper/**
 
-The app has no server-side data or secrets. The editor uses a single static `/maps?map=<id>` route, so the whole workspace exports to plain HTML, CSS, and JavaScript. The workflow in `.github/workflows/deploy-pages.yml` runs on every push to `main`, builds with the repository base path, and deploys `out/`.
+The app has no server-side data or secrets. The editor uses a single static `/maps?map=<id>` route, and share links carry their snapshot in the `#shared=` fragment of that route, so the whole workspace exports to plain HTML, CSS, and JavaScript and the host never receives a shared map. The workflow in `.github/workflows/deploy-pages.yml` runs on every push to `main`, builds with the repository base path, and deploys `out/`.
 
 For a local production server:
 
