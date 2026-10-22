@@ -1,9 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Buffer } from "node:buffer";
+import { useWorkspace } from "@/store/workspace";
 import { createSeededWorkspace } from "@/domain/templates";
 import { encodeSharePayload } from "@/domain/share-link";
 import { TEST_NOW } from "@/test/fixtures";
+import { mapHref } from "@/lib/routes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SharedMapView } from "./shared-map-view";
 
@@ -11,11 +14,24 @@ vi.mock("./static-flow-view", () => ({
   StaticFlowView: () => <div data-testid="static-flow" />,
 }));
 
+const push = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({}),
 }));
+
+beforeEach(() => {
+  push.mockClear();
+  window.localStorage.clear();
+  useWorkspace.setState({
+    maps: createSeededWorkspace(TEST_NOW),
+    hydrated: true,
+    past: [],
+    future: [],
+    storageError: null,
+  });
+});
 
 function supportMap() {
   return structuredClone(createSeededWorkspace(TEST_NOW)[0]);
@@ -54,6 +70,27 @@ describe("shared map view", () => {
     expect(screen.queryByRole("button", { name: "Add supplier" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add step" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("adopts the snapshot into the workspace and opens the editor on it", async () => {
+    const user = userEvent.setup();
+    const map = supportMap();
+    const payload = await encodeSharePayload(map);
+    render(
+      <TooltipProvider>
+        <SharedMapView payload={payload} />
+      </TooltipProvider>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Add to my workspace" }));
+    await waitFor(() => expect(push).toHaveBeenCalledTimes(1));
+
+    const adopted = useWorkspace.getState().maps[0];
+    expect(adopted.origin).toBe("link");
+    expect(adopted.status).toBe("draft");
+    expect(adopted.title).toBe(`${map.title} (imported)`);
+    expect(adopted.id).not.toBe(map.id);
+    expect(push).toHaveBeenCalledWith(mapHref(adopted.id));
   });
 
   it("lists failed readiness checks with details and no fix actions", async () => {

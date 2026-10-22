@@ -4,6 +4,7 @@ import {
   addEdge,
   addEntry,
   addNode,
+  adoptMap,
   createBlankMap,
   createMapFromTemplate,
   duplicateMap,
@@ -144,6 +145,7 @@ export interface WorkspaceState {
   deleteMap: (mapId: string) => void;
   resetDemo: () => void;
   importDocument: (document: ProcessMap) => string | null;
+  adoptDocument: (document: ProcessMap) => Promise<string>;
 
   addEntry: (mapId: string, lane: EntryLane, input: { label: string; detail?: string }) => void;
   editEntry: (
@@ -294,6 +296,27 @@ export const useWorkspace = create<WorkspaceState>()(
             future: [],
           });
           return imported.id;
+        },
+
+        adoptDocument: async (document) => {
+          // The shared view does not gate on the workspace, so adopting may
+          // run before the persisted workspace has rehydrated. Hydrate first:
+          // the adopted map must join the recipient's maps, not the seeds.
+          if (!useWorkspace.persist.hasHydrated()) {
+            await useWorkspace.persist.rehydrate();
+          }
+          const state = get();
+          const adopted = adoptMap(document, {
+            existingTitles: state.maps.map((map) => map.title),
+            id: createId("map"),
+            now: nowIso(),
+          });
+          set({
+            maps: [adopted, ...state.maps],
+            past: [...state.past, state.maps].slice(-HISTORY_LIMIT),
+            future: [],
+          });
+          return adopted.id;
         },
 
         addEntry: (mapId, lane, input) => {

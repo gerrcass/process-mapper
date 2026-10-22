@@ -2,13 +2,16 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { ArrowLeft, Check, Eye, Link2, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, Eye, Link2, Plus, TriangleAlert } from "lucide-react";
 import type { ProcessMap } from "@/domain/types";
 import { decodeSharePayload } from "@/domain/share-link";
 import { mapStats } from "@/domain/operations";
 import { evaluateReadiness } from "@/domain/readiness";
 import { formatLongDate } from "@/lib/time";
+import { mapHref } from "@/lib/routes";
+import { useWorkspace } from "@/store/workspace";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/pill";
@@ -47,8 +50,8 @@ type LoadState =
 /**
  * The read-only surface behind a share link: a snapshot of one process map
  * carried in the URL fragment. Decodes after mount so the first client
- * render matches the server render. Exposes no editing control and never
- * touches the workspace store.
+ * render matches the server render. Exposes no editing control; the only
+ * store interaction is adopting the snapshot into the workspace.
  */
 export function SharedMapView({ payload }: { payload: string }) {
   const [state, setState] = React.useState<LoadState>({ status: "reading" });
@@ -118,9 +121,22 @@ function SharedError({ error }: { error: string }) {
 }
 
 function SharedReadOnly({ map }: { map: ProcessMap }) {
+  const router = useRouter();
+  const adoptDocument = useWorkspace((state) => state.adoptDocument);
+  const [adopting, setAdopting] = React.useState(false);
   const stats = mapStats(map);
   const readiness = evaluateReadiness(map);
   const failedChecks = readiness.checks.filter((check) => !check.passed);
+
+  const handleAdopt = async () => {
+    setAdopting(true);
+    try {
+      const id = await adoptDocument(map);
+      router.push(mapHref(id));
+    } finally {
+      setAdopting(false);
+    }
+  };
 
   return (
     <div className="min-h-dvh bg-paper">
@@ -160,7 +176,13 @@ function SharedReadOnly({ map }: { map: ProcessMap }) {
               {stats.entries} SIPOC entries
             </p>
           </div>
-          <StatusPill status={map.status} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="primary" size="lg" disabled={adopting} onClick={() => void handleAdopt()}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add to my workspace
+            </Button>
+            <StatusPill status={map.status} />
+          </div>
         </section>
 
         <section

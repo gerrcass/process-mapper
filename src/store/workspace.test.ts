@@ -117,6 +117,52 @@ describe("workspace store", () => {
     expect(imported?.sipoc.inputs[0].id).not.toBe(source.sipoc.inputs[0].id);
   });
 
+  it("adopts a shared snapshot with a fresh identity, draft status, and link origin", async () => {
+    const snapshot = structuredClone(useWorkspace.getState().maps[0]);
+    const before = useWorkspace.getState().maps;
+
+    const adoptedId = await useWorkspace.getState().adoptDocument(snapshot);
+    const adopted = useWorkspace.getState().maps.find((map) => map.id === adoptedId);
+
+    expect(adopted).toBeDefined();
+    expect(adopted?.origin).toBe("link");
+    expect(adopted?.status).toBe("draft");
+    expect(adopted?.id).not.toBe(snapshot.id);
+    expect(adopted?.nodes[0].id).not.toBe(snapshot.nodes[0].id);
+    expect(adopted?.edges[0].id).not.toBe(snapshot.edges[0].id);
+    expect(adopted?.sipoc.suppliers[0].id).not.toBe(snapshot.sipoc.suppliers[0].id);
+    expect(adopted?.edges[0].source).toBe(
+      adopted?.nodes.find((node) => node.id === adopted.edges[0].source)?.id,
+    );
+    expect(adopted?.createdAt).toBe(adopted?.updatedAt);
+    // Existing maps are untouched.
+    expect(useWorkspace.getState().maps.slice(1)).toEqual(before);
+  });
+
+  it("names adopted maps so titles do not collide, even for the same snapshot", async () => {
+    const snapshot = structuredClone(useWorkspace.getState().maps[0]);
+
+    const firstId = await useWorkspace.getState().adoptDocument(snapshot);
+    const secondId = await useWorkspace.getState().adoptDocument(snapshot);
+    const first = useWorkspace.getState().maps.find((map) => map.id === firstId);
+    const second = useWorkspace.getState().maps.find((map) => map.id === secondId);
+
+    expect(firstId).not.toBe(secondId);
+    expect(first?.title).toBe(`${snapshot.title} (imported)`);
+    expect(second?.title).toBe(`${snapshot.title} (imported 2)`);
+  });
+
+  it("adopts a snapshot in one undoable history step", async () => {
+    const snapshot = structuredClone(useWorkspace.getState().maps[0]);
+    const before = useWorkspace.getState().maps;
+
+    await useWorkspace.getState().adoptDocument(snapshot);
+
+    expect(useWorkspace.getState().past).toHaveLength(1);
+    useWorkspace.getState().undo();
+    expect(useWorkspace.getState().maps).toEqual(before);
+  });
+
   it("undoes and redoes across entry and step mutations", () => {
     const map = useWorkspace.getState().maps[0];
     useWorkspace.getState().addEntry(map.id, "suppliers", { label: "New supplier" });
