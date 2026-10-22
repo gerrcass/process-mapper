@@ -28,7 +28,7 @@ There are no runtime environment variables, backend, or accounts. Map data lives
 - Validate every boundary: persisted payloads, imported files, share link payloads, and parsed form values.
 - The editor is client-side and hydration-safe: no `localStorage` reads during render, and a stable skeleton until rehydration finishes.
 - Use the existing UI primitives and design tokens. New dependencies need a reason in the ticket.
-- Share links ride the fragment of the `/maps` route and are validated like any other boundary. See ADR-0003.
+- Share links ride the fragment of the `/maps` route and are validated like any other boundary. A link carries a fixed snapshot; recipients adopt it into their workspace. See ADR-0003 and the glossary terms.
 - Interactive controls need an accessible name, visible focus, and a keyboard path.
 - **Static hosting:** GitHub Pages serves a static export and the editor is the `/maps?map=<id>` route. Read the static-export rules in `CODING_STANDARDS.md` before changing routes, metadata, or assets.
 

@@ -545,7 +545,7 @@ export function setViewport(map: ProcessMap, viewport: Viewport): ProcessMap {
   return { ...map, viewport };
 }
 
-interface CloneOptions {
+interface RebuildOptions {
   id: string;
   now: string;
   title?: string;
@@ -554,7 +554,8 @@ interface CloneOptions {
   status?: MapStatus;
 }
 
-function cloneWithFreshIds(source: ProcessMap, options: CloneOptions): ProcessMap {
+/** Rebuilds a document with a fresh identity: new ids for every node, edge, and entry. */
+function rebuildWithFreshIds(source: ProcessMap, options: RebuildOptions): ProcessMap {
   const nodeIdMap = new Map<string, string>();
   const nodes = source.nodes.map((node, index) => {
     const id = `${options.id}-node-${index + 1}`;
@@ -595,7 +596,7 @@ export function duplicateMap(
   source: ProcessMap,
   options: { id: string; now: string; title?: string },
 ): ProcessMap {
-  return cloneWithFreshIds(source, {
+  return rebuildWithFreshIds(source, {
     id: options.id,
     now: options.now,
     title: options.title ?? `${source.title} copy`,
@@ -607,7 +608,7 @@ export function createMapFromTemplate(
   template: ProcessMap,
   options: { id: string; now: string; title?: string; description?: string },
 ): ProcessMap {
-  return cloneWithFreshIds(template, {
+  return rebuildWithFreshIds(template, {
     id: options.id,
     now: options.now,
     title: options.title ?? template.title,
@@ -632,7 +633,7 @@ export function importMap(
   source: ProcessMap,
   options: { existingTitles: string[]; id: string; now: string },
 ): ProcessMap {
-  return cloneWithFreshIds(source, {
+  return rebuildWithFreshIds(source, {
     id: options.id,
     now: options.now,
     title: importedTitle(source.title, options.existingTitles),
@@ -645,7 +646,7 @@ export function adoptMap(
   source: ProcessMap,
   options: { existingTitles: string[]; id: string; now: string },
 ): ProcessMap {
-  return cloneWithFreshIds(source, {
+  return rebuildWithFreshIds(source, {
     id: options.id,
     now: options.now,
     title: importedTitle(source.title, options.existingTitles),
