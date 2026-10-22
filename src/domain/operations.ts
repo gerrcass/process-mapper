@@ -640,3 +640,16 @@ export function importMap(
     status: "draft",
   });
 }
+
+export function adoptMap(
+  source: ProcessMap,
+  options: { existingTitles: string[]; id: string; now: string },
+): ProcessMap {
+  return cloneWithFreshIds(source, {
+    id: options.id,
+    now: options.now,
+    title: importedTitle(source.title, options.existingTitles),
+    origin: "link",
+    status: "draft",
+  });
+}

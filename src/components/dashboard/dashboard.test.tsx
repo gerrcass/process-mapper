@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useWorkspace } from "@/store/workspace";
 import { createSeededWorkspace } from "@/domain/templates";
-import { TEST_NOW } from "@/test/fixtures";
+import { TEST_NOW, makeMap } from "@/test/fixtures";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Dashboard } from "./dashboard";
 
@@ -86,5 +86,18 @@ describe("dashboard search", () => {
     expect(screen.getByRole("heading", { name: "New map" })).toBeInTheDocument();
     expect(screen.getByLabelText("Title")).toHaveValue("Purchase order approval");
     expect(screen.getByRole("radio", { name: /Purchase order approval/ })).toBeChecked();
+  });
+
+  it("labels a map adopted from a share link", () => {
+    useWorkspace.setState({
+      maps: [{ ...makeMap({ title: "Adopted returns map" }), origin: "link" }],
+    });
+    render(
+      <TooltipProvider>
+        <Dashboard />
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByText("From a link")).toBeInTheDocument();
   });
 });

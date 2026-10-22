@@ -22,6 +22,7 @@ const ORIGIN_LABELS: Record<ProcessMap["origin"], string | null> = {
   template: "Template",
   import: "Imported",
   duplicate: "Copy",
+  link: "From a link",
 };
 
 function LaneMotif({ map }: { map: ProcessMap }) {
