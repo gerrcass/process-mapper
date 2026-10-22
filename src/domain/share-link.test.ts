@@ -120,11 +120,20 @@ describe("share link payload codec", () => {
     expect(result).toEqual({ ok: true, value: LITERAL_MAP });
   });
 
-  it("rejects an empty payload", async () => {
+  it("rejects an empty payload and explains that the link carries no map", async () => {
     const result = await decodeSharePayload("");
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toContain("no payload");
+    if (!result.ok) expect(result.error).toBe("This share link carries no map.");
+  });
+
+  it("rejects a payload that is only a format prefix", async () => {
+    for (const prefix of ["z1.", "u1."]) {
+      const result = await decodeSharePayload(prefix);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBe("This share link carries no map.");
+    }
   });
 
   it("rejects a payload without a format prefix", async () => {
@@ -194,7 +203,8 @@ describe("share link payload codec", () => {
 });
 
 describe("share link budget", () => {
-  it("passes a payload at the budget and refuses one over it", () => {
+  it("passes a payload just under the budget and at it, and refuses one just over", () => {
+    expect(exceedsShareLinkBudget("a".repeat(SHARE_LINK_BUDGET - 1))).toBe(false);
     expect(exceedsShareLinkBudget("a".repeat(SHARE_LINK_BUDGET))).toBe(false);
     expect(exceedsShareLinkBudget("a".repeat(SHARE_LINK_BUDGET + 1))).toBe(true);
   });

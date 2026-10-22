@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import { Buffer } from "node:buffer";
 import { createSeededWorkspace } from "@/domain/templates";
 import { encodeSharePayload } from "@/domain/share-link";
 import { TEST_NOW } from "@/test/fixtures";
@@ -85,5 +86,42 @@ describe("shared map view", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/not valid base64/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Back to workspace/i })).toHaveAttribute("href", "/");
+  });
+
+  it("explains that an empty link carries no map and offers the workspace", async () => {
+    render(
+      <TooltipProvider>
+        <SharedMapView payload="" />
+      </TooltipProvider>,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /This link cannot be read/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("This share link carries no map.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Back to workspace/i })).toHaveAttribute("href", "/");
+  });
+
+  it("reports the validation reason with the offending field", async () => {
+    const map = supportMap();
+    const broken = {
+      ...map,
+      nodes: map.nodes.map((node, index) =>
+        index === 1 ? { ...node, id: map.nodes[0].id } : node,
+      ),
+    };
+    const payload = `u1.${Buffer.from(JSON.stringify(broken), "utf8").toString("base64url")}`;
+    render(
+      <TooltipProvider>
+        <SharedMapView payload={payload} />
+      </TooltipProvider>,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /This link cannot be read/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Could not read this share link/i)).toHaveTextContent(
+      `Could not read this share link: nodes[1].id duplicate node id "${map.nodes[0].id}".`,
+    );
   });
 });

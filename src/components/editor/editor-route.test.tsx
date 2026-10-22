@@ -42,11 +42,15 @@ beforeEach(() => {
 });
 
 describe("editor route", () => {
-  it("shows a stable skeleton until the fragment is read, then the empty state", async () => {
+  it("shows a stable skeleton until the fragment is read, then the no-map state", async () => {
     setup();
 
     expect(screen.getByLabelText("Loading map")).toBeInTheDocument();
-    expect(await screen.findByText("This map is not in this workspace.")).toBeInTheDocument();
+    // A bare shared view path is a link that lost its payload: explain the
+    // link carries no map rather than claim the workspace is missing a map.
+    const view = await screen.findByTestId("shared-view");
+    expect(view).toHaveAttribute("data-payload", "");
+    expect(screen.queryByText("This map is not in this workspace.")).not.toBeInTheDocument();
   });
 
   it("opens the shared view for a share fragment", async () => {

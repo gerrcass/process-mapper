@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { Editor } from "@/components/editor/editor";
 import { EditorSkeleton } from "@/components/skeletons";
 import { WorkspaceGate } from "@/components/workspace-gate";
-import { MapNotFound } from "@/components/map-not-found";
 import { SharedMapView } from "@/components/share/shared-map-view";
 import { sharePayloadFromHash } from "@/domain/share-link";
 
@@ -57,5 +56,8 @@ export function EditorRoute() {
     return <SharedMapView key={sharedPayload} payload={sharedPayload} />;
   }
 
-  return <MapNotFound />;
+  // A link with no map payload at all: either the `#shared=` marker carried
+  // nothing, or the fragment was lost in transit. Explain rather than claim
+  // the workspace is missing a map.
+  return <SharedMapView key="" payload="" />;
 }
