@@ -122,7 +122,7 @@ Tests sit at the seams where the product can fail without a browser:
 - **Domain** (`src/domain/*.test.ts`) — entry and step CRUD, SIPOC reordering, edge validation, readiness weights and boundaries, Tidy flow with cycles and disconnected components, schema validation, import/export shape and identity regeneration, share-link encoding, decoding, and the size budget.
 - **Store** (`src/store/workspace.test.ts`) — create, duplicate, delete, import, adopt, reset, undo/redo, drag transactions, valid hydration, corrupt-payload fallback, newer-schema rejection.
 - **Components** — inline SIPOC edits and keyboard reordering, process step edits, inspector fields through to SIPOC, readiness dialog, dashboard search, new-map validation, share dialog, shared view.
-- **Browser** (`e2e/journeys.spec.ts`) — cross-view edits surviving a reload, template lifecycle with delete and JSON import, corrupt storage and empty flow, a broken share link naming its reason, and phone-width usability.
+- **Browser** (`e2e/journeys.spec.ts`) — cross-view edits surviving a reload, template lifecycle with delete and JSON import, corrupt storage and empty flow, a broken share link naming its reason, reading and adopting a shared snapshot before editing it, and phone-width usability.
 
 ```bash
 pnpm exec playwright install chromium
