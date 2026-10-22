@@ -5,7 +5,6 @@ import {
   Background,
   BackgroundVariant,
   Controls,
-  MarkerType,
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
@@ -18,8 +17,6 @@ import {
   type EdgeChange,
   type IsValidConnection,
   type NodeChange,
-  type NodeTypes,
-  type EdgeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -34,8 +31,8 @@ import {
   Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
-import { NODE_KIND_LABELS, type FlowNodeKind, type ProcessMap } from "@/domain/types";
-import { processSteps, validateEdge } from "@/domain/operations";
+import { type FlowNodeKind, NODE_KIND_LABELS, type ProcessMap } from "@/domain/types";
+import { validateEdge } from "@/domain/operations";
 import { useWorkspace } from "@/store/workspace";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { Button } from "@/components/ui/button";
@@ -52,49 +49,14 @@ import {
   FLOW_PNG_PENDING_KEY,
   exportFlowPng,
 } from "@/lib/export-flow-image";
-import { AtlasNodeCard, type AtlasNode, type AtlasNodeData } from "./flow-nodes";
-import { AtlasFlowEdge, type AtlasEdge, type AtlasEdgeData } from "./flow-edge";
-
-const NODE_TYPES = {
-  start: AtlasNodeCard,
-  step: AtlasNodeCard,
-  decision: AtlasNodeCard,
-  end: AtlasNodeCard,
-} satisfies NodeTypes;
-
-const EDGE_TYPES = { atlas: AtlasFlowEdge } satisfies EdgeTypes;
-
-function toNodes(map: ProcessMap, selectedNodeId: string | null): AtlasNode[] {
-  const indexes = new Map(processSteps(map).map((step, index) => [step.id, index + 1]));
-  return map.nodes.map((node) => ({
-    id: node.id,
-    type: node.kind,
-    position: { ...node.position },
-    selected: node.id === selectedNodeId,
-    data: { node, stepIndex: indexes.get(node.id) ?? 1 } satisfies AtlasNodeData,
-    ariaLabel: `${NODE_KIND_LABELS[node.kind]} ${node.title}`,
-  }));
-}
-
-function toEdges(map: ProcessMap, selectedEdgeId: string | null): AtlasEdge[] {
-  return map.edges.map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    sourceHandle: edge.sourceHandle,
-    targetHandle: edge.targetHandle,
-    type: "atlas",
-    selected: edge.id === selectedEdgeId,
-    data: { edge } satisfies AtlasEdgeData,
-    ariaLabel: edge.label ? `Flow edge ${edge.label}` : "Flow edge",
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 18,
-      height: 18,
-      color: edge.kind === "exception" ? "var(--color-warning)" : "var(--color-muted)",
-    },
-  }));
-}
+import {
+  EDGE_TYPES,
+  NODE_TYPES,
+  toFlowEdges,
+  toFlowNodes,
+  type AtlasEdge,
+  type AtlasNode,
+} from "./flow-adapters";
 
 function miniMapColor(node: AtlasNode): string {
   if (node.type === "start" || node.type === "end") return "var(--color-ink)";
@@ -139,8 +101,8 @@ function FlowCanvasInner({
   onSelectNode: (id: string | null) => void;
   onSelectEdge: (id: string | null) => void;
 }) {
-  const [nodes, setNodes] = useNodesState<AtlasNode>(toNodes(map, selectedNodeId));
-  const [edges, setEdges] = useEdgesState<AtlasEdge>(toEdges(map, selectedEdgeId));
+  const [nodes, setNodes] = useNodesState<AtlasNode>(toFlowNodes(map, selectedNodeId));
+  const [edges, setEdges] = useEdgesState<AtlasEdge>(toFlowEdges(map, selectedEdgeId));
   const { fitView, setCenter, screenToFlowPosition, getNodes } = useReactFlow<
     AtlasNode,
     AtlasEdge
@@ -159,12 +121,12 @@ function FlowCanvasInner({
   const motionDuration = reduceMotion ? 0 : 280;
 
   React.useEffect(() => {
-    setNodes(toNodes(map, selectedNodeId));
+    setNodes(toFlowNodes(map, selectedNodeId));
     // Sync only when the document's nodes or the selection change; live drags update local state.
   }, [map.nodes, map, selectedNodeId, setNodes]);
 
   React.useEffect(() => {
-    setEdges(toEdges(map, selectedEdgeId));
+    setEdges(toFlowEdges(map, selectedEdgeId));
   }, [map.edges, map, selectedEdgeId, setEdges]);
 
   React.useEffect(() => {
