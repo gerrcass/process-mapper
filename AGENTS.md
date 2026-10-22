@@ -17,7 +17,7 @@ Local-first SIPOC and process-mapping demo. Next.js App Router, TypeScript, Tail
 - `pnpm dev` — local development.
 - `pnpm verify` — lint, typecheck, unit/component tests, server build, and static export. This is the definition of a clean branch.
 - `pnpm build:static` — reproduce the GitHub Pages static export locally.
-- `pnpm test:e2e` — Playwright journeys; run when touching the editor, persistence, exports, or routes.
+- `pnpm test:e2e` — Playwright journeys; run when touching the editor, persistence, exports, or routes. For UI verification, drive the installed Playwright Chromium (`pnpm exec playwright ...`); it is already there.
 
 There are no runtime environment variables, backend, or accounts. Map data lives in the browser; see ADR-0001. Deployment-only Pages variables are documented in `README.md`.
 

@@ -58,6 +58,7 @@ These are judgement calls for review. Mechanical rules belong in lint, types, or
 - Test external behaviour, not implementation shape. A refactor that preserves behaviour should not break tests.
 - Derive expected values independently: known-good literals, worked examples, or the spec. Never recompute an expected value with the same algorithm as the implementation.
 - Prefer the highest seam available: pure domain functions first, store second, component third, browser last.
+- Check the spec's Testing Decisions against the ticket set. A browser seam belongs to the ticket that completes the journey, named in its acceptance criteria, not discovered at review.
 - Every bug fix starts with a test that fails for the right reason.
 - Avoid snapshots of whole pages or trees. Assert what the user can observe.
 - Keep the full suite fast enough to run before every commit; put slow journeys behind the e2e command.
